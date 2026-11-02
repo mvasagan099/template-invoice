@@ -1,41 +1,54 @@
-import React from 'react';
-import { jsPDF } from 'jspdf';
+import React, { useState } from 'react';
 import { BILL_TEMPLATES } from '../../constants/billPresets.js';
-import { captureBillCanvas } from '../../utils/pdfExport.js';
+import { exportBillToPng, exportBillToPdf } from '../../utils/pdfExport.js';
 
 export function BillToolbar({ resetData, settings, updateSection }) {
+  const [downloadingPng, setDownloadingPng] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
   async function handleDownloadPng() {
     try {
+      setDownloadingPng(true);
       const element = document.getElementById('bill-a4-preview');
-      const canvas = await captureBillCanvas(element);
-      const link = document.createElement('a');
-      link.download = 'Transport_Bill.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      await exportBillToPng(element, 'Transport_Bill.png');
     } catch (err) {
       console.error(err);
       alert('PNG generation failed: ' + err.message);
+    } finally {
+      setDownloadingPng(false);
     }
   }
 
   async function handleDownloadPdf() {
     try {
+      setDownloadingPdf(true);
       const element = document.getElementById('bill-a4-preview');
-      const canvas = await captureBillCanvas(element);
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = (canvas.height * pageWidth) / canvas.width;
-      pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, Math.min(pageHeight, 297));
-      pdf.save('Transport_Bill.pdf');
+      await exportBillToPdf(element, 'Transport_Bill.pdf');
     } catch (err) {
       console.error(err);
       alert('PDF generation failed: ' + err.message);
+    } finally {
+      setDownloadingPdf(false);
     }
+  }
+
+  function handlePrint() {
+    const outer = document.querySelector('.bill-a4-outer');
+    const prevTransform = outer ? outer.style.transform : '';
+    const prevMargin = outer ? outer.style.marginBottom : '';
+
+    if (outer) {
+      outer.style.transform = 'none';
+      outer.style.marginBottom = '0px';
+    }
+
+    setTimeout(() => {
+      window.print();
+      if (outer) {
+        outer.style.transform = prevTransform;
+        outer.style.marginBottom = prevMargin;
+      }
+    }, 150);
   }
 
   return (
@@ -52,7 +65,7 @@ export function BillToolbar({ resetData, settings, updateSection }) {
           </button>
           <button
             className="bill-btn"
-            onClick={() => window.print()}
+            onClick={handlePrint}
             title="Print bill"
           >
             🖨 Print
@@ -60,16 +73,18 @@ export function BillToolbar({ resetData, settings, updateSection }) {
           <button
             className="bill-btn"
             onClick={handleDownloadPng}
+            disabled={downloadingPng}
             title="Download as PNG"
           >
-            🖼 PNG
+            {downloadingPng ? '⏳ PNG...' : '🖼 PNG'}
           </button>
           <button
             className="bill-btn bill-btn-primary"
             onClick={handleDownloadPdf}
+            disabled={downloadingPdf}
             title="Download as PDF"
           >
-            ↓ PDF
+            {downloadingPdf ? '⏳ PDF...' : '↓ PDF'}
           </button>
         </div>
       </div>
