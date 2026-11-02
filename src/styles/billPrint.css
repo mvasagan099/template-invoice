@@ -1,0 +1,25 @@
+/* Ctrl/Cmd+P fallback. The toolbar Print action uses an isolated image document. */
+@media print {
+  body:has(.bill-studio) {
+    width: auto !important; height: 1px !important; min-height: 0 !important;
+    max-height: none !important; overflow: visible !important;
+  }
+  body:has(.bill-studio) #root,
+  body:has(.bill-studio) .app-shell,
+  body:has(.bill-studio) .app-main,
+  body:has(.bill-studio) .bill-studio,
+  body:has(.bill-studio) .bill-studio-left {
+    display: block !important; position: static !important;
+    width: auto !important; height: 0 !important; min-height: 0 !important;
+    max-height: none !important; margin: 0 !important; padding: 0 !important;
+    border: 0 !important; overflow: visible !important;
+  }
+  body:has(.bill-studio) .bill-a4-outer {
+    position: fixed !important; left: 6mm !important; top: 8.5mm !important;
+    margin: 0 !important; padding: 0 !important; border: 0 !important;
+    width: 794px !important; height: 1123px !important; min-height: 0 !important;
+    transform: scale(0.942) !important; transform-origin: top left !important;
+    box-shadow: none !important; border-radius: 0 !important;
+  }
+  body:has(.bill-studio) #bill-a4-preview { margin: 0 !important; }
+}

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { BillTemplatePicker } from './BillTemplatePicker.jsx';
-import { exportBillToPng, exportBillToPdf } from '../../utils/pdfExport.js';
+import { exportBillToPng, exportBillToPdf, exportBillToPrint } from '../../utils/pdfExport.js';
 
 export function BillToolbar({ resetData, settings, updateSection }) {
   const [downloadingPng, setDownloadingPng] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [printing, setPrinting] = useState(false);
+  const busy = printing || downloadingPng || downloadingPdf;
 
   async function handleDownloadPng() {
     try {
@@ -32,8 +34,16 @@ export function BillToolbar({ resetData, settings, updateSection }) {
     }
   }
 
-  function handlePrint() {
-    window.print();
+  async function handlePrint() {
+    try {
+      setPrinting(true);
+      await exportBillToPrint(document.getElementById('bill-a4-preview'));
+    } catch (err) {
+      console.error(err);
+      alert('Print preparation failed: ' + err.message);
+    } finally {
+      setPrinting(false);
+    }
   }
 
   return (
@@ -51,14 +61,15 @@ export function BillToolbar({ resetData, settings, updateSection }) {
           <button
             className="bill-btn"
             onClick={handlePrint}
+            disabled={busy}
             title="Print bill"
           >
-            🖨 Print
+            {printing ? '⏳ Print...' : '🖨 Print'}
           </button>
           <button
             className="bill-btn"
             onClick={handleDownloadPng}
-            disabled={downloadingPng}
+            disabled={busy}
             title="Download as PNG"
           >
             {downloadingPng ? '⏳ PNG...' : '🖼 PNG'}
@@ -66,7 +77,7 @@ export function BillToolbar({ resetData, settings, updateSection }) {
           <button
             className="bill-btn bill-btn-primary"
             onClick={handleDownloadPdf}
-            disabled={downloadingPdf}
+            disabled={busy}
             title="Download as PDF"
           >
             {downloadingPdf ? '⏳ PDF...' : '↓ PDF'}

@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import { ToastProvider } from './components/common/Toast.jsx';
 import './styles/index.css';
+import './styles/billPrint.css';
 
 const container = document.getElementById('root');
 const root = createRoot(container);

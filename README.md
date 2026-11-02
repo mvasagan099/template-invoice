@@ -169,3 +169,10 @@ instructions are optional inputs.
 Run `npm run test:bills` to check all templates for blank/partial/filled/cleared
 data, preservation of entered fields, decimal totals, GST, and unique DOM
 structures after removing all text, colours and attributes.
+
+Bill Print, PDF and PNG share one frozen A4 image with 6 mm safe margins.
+The Print button opens an isolated image document so application wrappers cannot
+create extra pages. PDF always contains one A4 page; PNG uses the same A4 frame.
+The export checks also cover image placement, grid geometry, text spacing and
+print-frame cleanup. Safari's optional browser headers and footers can be turned
+off in the print dialog for a clean document.

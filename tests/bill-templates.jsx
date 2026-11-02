@@ -6,6 +6,7 @@ import { BillA4Preview } from '../src/components/bill/BillA4Preview.jsx';
 import { BILL_TEMPLATES, DEFAULT_BILL_DATA } from '../src/constants/billPresets.js';
 import { EXTENDED_BILL_CONFIGS } from '../src/components/bill/templates/extended/extendedBillConfig.js';
 import { getBillDesign } from '../src/components/bill/templates/extended/billDesigns.js';
+import './bill-exports.mjs';
 
 const zeroTotals = Object.fromEntries([
   'freight', 'loading', 'unloading', 'insurance', 'otherCharges',

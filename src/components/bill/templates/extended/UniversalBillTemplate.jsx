@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { numberToIndianWords } from '../../../../utils/currency.js';
 import { getBillDesign } from './billDesigns.js';
 import './billDesigns.css';
+import { fitBillContents } from '../../../../utils/billRendering.js';
 
 const hasValue = (v) => v != null && String(v).trim() !== '';
 const text = (v) => v ?? '';
@@ -172,13 +173,7 @@ export function UniversalBillTemplate({ data, totals, config }) {
     let disposed = false;
     const fit = () => {
       if (disposed) return;
-      const style = getComputedStyle(page);
-      const available = page.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
-      content.style.transform = 'none';
-      content.style.height = `${available}px`;
-      const scale = Math.min(1, available / Math.max(1, content.scrollHeight));
-      content.style.transform = `scale(${scale})`;
-      page.dataset.fitScale = String(scale);
+      fitBillContents(page);
     };
     fit();
     const observer = new ResizeObserver(fit);
