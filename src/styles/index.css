@@ -188,3 +188,52 @@
     break-after: avoid !important;
   }
 }
+
+/* ==========================================================================
+   WEBSITE LOGO & BRAND STYLING
+   ========================================================================== */
+.app-nav-brand {
+  display: flex;
+  align-items: center;
+  padding: 2px 8px 2px 4px;
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  transition: transform var(--duration-base) var(--ease-standard), opacity var(--duration-base);
+  flex-shrink: 0;
+}
+
+.app-nav-brand:hover {
+  transform: scale(1.03);
+  opacity: 0.95;
+}
+
+.app-nav-logo {
+  height: 32px;
+  width: auto;
+  max-width: 140px;
+  object-fit: contain;
+  display: block;
+}
+
+.app-nav-mobile-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.app-nav-mobile-logo {
+  height: 36px;
+  width: auto;
+  max-width: 150px;
+  object-fit: contain;
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .app-nav-inner {
+    justify-content: space-between !important;
+  }
+}

@@ -19,6 +19,10 @@ export function AppNav() {
   return (
     <header className="app-nav">
       <div className="app-nav-inner">
+        <NavLink to="/" className="app-nav-brand" title="Lords & Kings">
+          <img src="/logo.png" alt="Lords & Kings" className="app-nav-logo" />
+        </NavLink>
+
         <nav className="app-nav-links" aria-label="Primary">
           {NAV_ITEMS.map((item) => (
             <NavLink
@@ -48,6 +52,13 @@ export function AppNav() {
 
       {mobileOpen && (
         <nav className="app-nav-mobile" aria-label="Primary mobile">
+          <NavLink
+            to="/"
+            className="app-nav-mobile-brand"
+            onClick={() => setMobileOpen(false)}
+          >
+            <img src="/logo.png" alt="Lords & Kings" className="app-nav-mobile-logo" />
+          </NavLink>
           {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
