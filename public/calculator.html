@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ledger — Smart Invoice Generator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --paper:#FAF6EC;
+  --paper-2:#F2ECDD;
+  --ink:#1B2A41;
+  --ink-soft:#4A5568;
+  --rule:#C9BFA5;
+  --rule-strong:#A99B78;
+  --stamp:#A13D2C;
+  --verified:#2F6F4E;
+  --accent:#8B5E34;
+  --shadow: rgba(27,42,65,0.15);
+  --danger:#B23A2E;
+}
+[data-theme="dark"]{
+  --paper:#141A22;
+  --paper-2:#1B222C;
+  --ink:#EDE6D6;
+  --ink-soft:#A9AFBC;
+  --rule:#3A4452;
+  --rule-strong:#4E5A6B;
+  --stamp:#D9694F;
+  --verified:#5FAE84;
+  --accent:#C89B6C;
+  --shadow: rgba(0,0,0,0.45);
+  --danger:#E06A5B;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:'Public Sans', sans-serif;
+  background: var(--paper-2);
+  color: var(--ink);
+  transition: background .3s ease, color .3s ease;
+  min-height:100vh;
+}
+.app{
+  max-width:1280px;
+  margin:0 auto;
+  padding:28px 24px 60px;
+}
+header.top{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  margin-bottom:28px;
+  flex-wrap:wrap;
+  gap:16px;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.brand-mark{
+  width:44px;height:44px;
+  border:2px solid var(--ink);
+  border-radius:2px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Spectral', serif;
+  font-weight:700;
+  font-size:20px;
+  transform: rotate(-3deg);
+  flex-shrink:0;
+}
+.brand h1{
+  font-family:'Spectral', serif;
+  font-weight:700;
+  font-size:28px;
+  margin:0;
+  letter-spacing:0.2px;
+}
+.brand p{
+  margin:2px 0 0;
+  font-size:12.5px;
+  color:var(--ink-soft);
+  letter-spacing:0.6px;
+  text-transform:uppercase;
+}
+.theme-toggle{
+  border:1.5px solid var(--rule-strong);
+  background:transparent;
+  color:var(--ink);
+  padding:9px 16px;
+  border-radius:999px;
+  font-size:13px;
+  cursor:pointer;
+  font-family:'Public Sans',sans-serif;
+  font-weight:600;
+  display:flex; align-items:center; gap:8px;
+  transition: background .2s;
+}
+.theme-toggle:hover{ background: var(--paper); }
+
+.layout{
+  display:grid;
+  grid-template-columns: 360px 1fr;
+  gap:24px;
+  align-items:start;
+}
+@media (max-width: 900px){
+  .layout{ grid-template-columns: 1fr; }
+}
+
+.panel{
+  background: var(--paper);
+  border:1px solid var(--rule);
+  border-radius:6px;
+  box-shadow: 0 6px 24px var(--shadow);
+  padding:20px;
+}
+.panel h2{
+  font-family:'Spectral', serif;
+  font-size:16px;
+  font-weight:600;
+  margin:0 0 14px;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--rule);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.field-label{
+  font-size:11.5px;
+  text-transform:uppercase;
+  letter-spacing:0.7px;
+  color:var(--ink-soft);
+  font-weight:600;
+  display:block;
+  margin-bottom:6px;
+}
+.total-input{
+  width:100%;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:22px;
+  font-weight:600;
+  padding:10px 12px;
+  border:1.5px solid var(--rule-strong);
+  border-radius:4px;
+  background: var(--paper-2);
+  color: var(--ink);
+  margin-bottom:18px;
+}
+.total-input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+
+table.products{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+  margin-bottom:10px;
+}
+table.products th{
+  text-align:left;
+  font-size:10.5px;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  color:var(--ink-soft);
+  padding:4px 4px 8px;
+  border-bottom:1px solid var(--rule);
+  font-weight:600;
+}
+table.products td{
+  padding:4px 4px;
+  vertical-align:middle;
+}
+table.products input{
+  width:100%;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12.5px;
+  padding:6px 6px;
+  border:1px solid var(--rule);
+  border-radius:3px;
+  background: var(--paper-2);
+  color:var(--ink);
+}
+table.products input.pname{ font-family:'Public Sans',sans-serif; font-weight:500;}
+.rm-row{
+  background:none; border:none; color:var(--danger); cursor:pointer;
+  font-size:15px; padding:2px 6px; line-height:1;
+}
+.add-row-btn{
+  width:100%;
+  padding:8px;
+  border:1.5px dashed var(--rule-strong);
+  background:transparent;
+  color:var(--ink-soft);
+  border-radius:4px;
+  cursor:pointer;
+  font-size:12.5px;
+  font-weight:600;
+  margin-bottom:16px;
+}
+.add-row-btn:hover{ color:var(--ink); border-color:var(--ink); }
+
+.btn-primary{
+  width:100%;
+  padding:13px;
+  background: var(--ink);
+  color: var(--paper);
+  border:none;
+  border-radius:4px;
+  font-size:14.5px;
+  font-weight:700;
+  cursor:pointer;
+  letter-spacing:0.3px;
+  font-family:'Public Sans', sans-serif;
+  transition: transform .12s ease, opacity .12s ease;
+}
+.btn-primary:hover{ opacity:0.88; }
+.btn-primary:active{ transform: scale(0.99); }
+.btn-primary:disabled{ opacity:0.5; cursor:not-allowed; }
+
+.hint{
+  font-size:11.5px;
+  color:var(--ink-soft);
+  margin-top:10px;
+  line-height:1.5;
+}
+
+/* invoice sheet */
+.sheet-wrap{ position:relative; }
+.toolbar{
+  display:flex;
+  gap:10px;
+  margin-bottom:14px;
+  flex-wrap:wrap;
+}
+.toolbar button{
+  padding:9px 16px;
+  border:1.5px solid var(--rule-strong);
+  background:var(--paper);
+  color:var(--ink);
+  border-radius:5px;
+  font-size:12.5px;
+  font-weight:600;
+  cursor:pointer;
+  font-family:'Public Sans',sans-serif;
+}
+.toolbar button:hover{ background:var(--paper-2); }
+.toolbar button:disabled{ opacity:0.4; cursor:not-allowed; }
+
+.sheet{
+  background: var(--paper);
+  border:1px solid var(--rule);
+  border-radius:6px;
+  box-shadow: 0 10px 32px var(--shadow);
+  padding:38px 40px;
+  position:relative;
+  overflow:hidden;
+  min-height:420px;
+}
+.sheet::before{
+  content:"";
+  position:absolute;
+  top:0; left:0; right:0; height:6px;
+  background: repeating-linear-gradient(90deg, var(--accent) 0 14px, transparent 14px 26px);
+  opacity:0.6;
+}
+.inv-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  padding-bottom:18px;
+  border-bottom:2px solid var(--ink);
+  margin-bottom:22px;
+}
+.inv-head h2{
+  font-family:'Spectral', serif;
+  font-size:24px;
+  margin:0 0 4px;
+}
+.inv-meta{ font-size:12px; color:var(--ink-soft); line-height:1.7; }
+.inv-no{ font-family:'IBM Plex Mono', monospace; }
+.stamp{
+  border:2.5px solid var(--verified);
+  color:var(--verified);
+  font-family:'Spectral', serif;
+  font-weight:700;
+  font-size:13px;
+  letter-spacing:1.4px;
+  padding:8px 14px;
+  border-radius:6px;
+  transform: rotate(6deg);
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+table.invoice{
+  width:100%;
+  border-collapse:collapse;
+  font-size:14.5px;
+}
+table.invoice thead th{
+  text-align:left;
+  padding:8px 6px;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.6px;
+  color:var(--ink-soft);
+  border-bottom:1.5px solid var(--ink);
+  font-weight:700;
+}
+table.invoice thead th.num, table.invoice td.num{ text-align:right; }
+table.invoice tbody td{
+  padding:11px 6px;
+  border-bottom:1px dotted var(--rule-strong);
+  font-family:'IBM Plex Mono', monospace;
+  font-size:13.5px;
+}
+table.invoice tbody td.name{ font-family:'Public Sans', sans-serif; font-weight:500; font-size:14px;}
+table.invoice tfoot td{
+  padding:14px 6px 4px;
+  font-family:'IBM Plex Mono', monospace;
+  font-weight:700;
+  font-size:17px;
+  border-top:2px solid var(--ink);
+}
+table.invoice tfoot td.label{ font-family:'Spectral',serif; font-size:16px; font-weight:700; }
+table.invoice tr.adj-row td{ font-style:italic; color:var(--ink-soft); }
+table.invoice tr.adj-row td.name{ font-style:italic; }
+
+.empty-state{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:340px; text-align:center; color:var(--ink-soft);
+  gap:10px;
+}
+.empty-state .glyph{ font-size:38px; opacity:0.5; }
+.fail-state{
+  padding:40px 20px; text-align:center;
+}
+.fail-state .glyph{ font-size:32px; color:var(--danger); margin-bottom:10px;}
+.fail-state h3{ font-family:'Spectral',serif; margin:0 0 8px; color:var(--danger); }
+.fail-state p{ color:var(--ink-soft); font-size:13.5px; line-height:1.6; max-width:440px; margin:0 auto;}
+
+.footnote{
+  margin-top:20px;
+  font-size:11px;
+  color:var(--ink-soft);
+  display:flex;
+  justify-content:space-between;
+  border-top:1px solid var(--rule);
+  padding-top:12px;
+}
+
+@media print{
+  body{ background:#fff !important; }
+  .panel, .toolbar, header.top, .footnote-app{ display:none !important; }
+  .layout{ display:block; }
+  .sheet{ box-shadow:none; border:none; padding:0; }
+  .app{ padding:0; max-width:none; }
+}
+</style>
+</head>
+<body data-theme="light">
+<div class="app">
+
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark">₹</div>
+      <div>
+        <h1>Ledger</h1>
+        <p>Smart Invoice Generator — Constraint Solver</p>
+      </div>
+    </div>
+    <button class="theme-toggle" id="themeToggle">🌙 Dark mode</button>
+  </header>
+
+  <div class="layout">
+    <!-- LEFT: controls -->
+    <div class="panel">
+      <h2>Invoice Parameters</h2>
+
+      <label class="field-label" for="invoiceTotal">Invoice Total (₹)</label>
+      <input type="number" id="invoiceTotal" class="total-input" value="800000" min="1" step="1">
+
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <label class="field-label" style="margin-bottom:0;">Product Ranges</label>
+        <div style="display:flex; gap:14px;">
+          <button type="button" id="resetProductsBtn" title="Refresh the list back to default products" style="background:none; border:none; color:var(--ink-soft); cursor:pointer; font-size:12px; font-weight:600; display:flex; align-items:center; gap:4px; padding:2px 4px;">↻ Refresh list</button>
+          <button type="button" id="refreshProductsBtn" title="Clear the product list" style="background:none; border:none; color:var(--ink-soft); cursor:pointer; font-size:12px; font-weight:600; display:flex; align-items:center; gap:4px; padding:2px 4px;">✕ Clear list</button>
+        </div>
+      </div>
+      <table class="products" id="productTable">
+        <thead>
+          <tr><th style="width:34%">Product</th><th>Min ₹</th><th>Max ₹</th><th></th></tr>
+        </thead>
+        <tbody id="productBody"></tbody>
+      </table>
+      <button class="add-row-btn" id="addRowBtn">+ Add product</button>
+
+      <button class="btn-primary" id="generateBtn">Generate Invoice</button>
+      <div class="hint">The solver picks only the products it needs, assigns whole-number quantities and prices inside your ranges, and guarantees the grand total matches exactly — or tells you no exact combination exists.</div>
+    </div>
+
+    <!-- RIGHT: invoice sheet -->
+    <div class="sheet-wrap">
+      <div class="toolbar">
+        <button id="regenBtn" disabled>↻ Generate New Invoice</button>
+        <button id="exportBtn" disabled>⤓ Export to Excel</button>
+        <button id="copyBtn" disabled>⧉ Copy Table</button>
+        <button id="printBtn" disabled>🖶 Print Invoice</button>
+      </div>
+      <div class="sheet" id="sheet">
+        <div class="empty-state">
+          <div class="glyph">🧾</div>
+          <div>Set your invoice total and product ranges, then generate.</div>
+        </div>
+      </div>
+      <div class="footnote footnote-app" id="solveInfo" style="display:none;">
+        <span id="solveMeta"></span>
+        <span id="solveTime"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------------------------------------------------
+   THEME
+--------------------------------------------------------- */
+const themeToggle = document.getElementById('themeToggle');
+themeToggle.addEventListener('click', () => {
+  const cur = document.body.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.body.setAttribute('data-theme', next);
+  themeToggle.textContent = next === 'dark' ? '☀️ Light mode' : '🌙 Dark mode';
+});
+
+/* ---------------------------------------------------------
+   PRODUCT TABLE (editable)
+--------------------------------------------------------- */
+const defaultProducts = [
+  { name: 'Apple', min: 4320, max: 4350 },
+  { name: 'Orange', min: 1920, max: 1950 },
+  { name: 'Mango', min: 60, max: 100 },
+  { name: 'Pomegranate', min: 1700, max: 1800 },
+  { name: 'Sweetlime', min: 50, max: 60 },
+];
+
+const productBody = document.getElementById('productBody');
+
+function renderEmptyProductState() {
+  productBody.innerHTML = `
+    <tr class="empty-row">
+      <td colspan="4" style="text-align:center; color:var(--ink-soft); padding:16px 4px; font-size:12.5px;">
+        No products added — click "+ Add product" to start.
+      </td>
+    </tr>
+  `;
+}
+
+/* ---------------------------------------------------------
+   localStorage PERSISTENCE
+--------------------------------------------------------- */
+const STORAGE_KEY = 'ledger_products';
+
+function saveProducts() {
+  const rows = [...productBody.querySelectorAll('tr')].filter(r => !r.classList.contains('empty-row'));
+  const products = rows.map(tr => ({
+    name: tr.querySelector('.pname').value,
+    min: tr.querySelector('.pmin').value,
+    max: tr.querySelector('.pmax').value
+  }));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(products)); } catch(e) {}
+}
+
+function loadProducts() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const arr = JSON.parse(raw);
+    if (Array.isArray(arr) && arr.length > 0) return arr;
+  } catch(e) {}
+  return null;
+}
+
+function addProductRow(p = { name: '', min: '', max: '' }) {
+  const emptyRow = productBody.querySelector('.empty-row');
+  if (emptyRow) emptyRow.remove();
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input class="pname" type="text" value="${p.name}" placeholder="Name"></td>
+    <td><input class="pmin" type="number" value="${p.min}" placeholder="min"></td>
+    <td><input class="pmax" type="number" value="${p.max}" placeholder="max"></td>
+    <td><button class="rm-row" title="Remove">✕</button></td>
+  `;
+  tr.querySelector('.rm-row').addEventListener('click', () => {
+    tr.remove();
+    if (productBody.querySelectorAll('tr').length === 0) renderEmptyProductState();
+    saveProducts();
+  });
+  tr.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', saveProducts);
+  });
+  productBody.appendChild(tr);
+}
+
+const savedProducts = loadProducts();
+(savedProducts || defaultProducts).forEach(addProductRow);
+document.getElementById('addRowBtn').addEventListener('click', () => {
+  addProductRow();
+  saveProducts();
+});
+
+const resetBtn = document.getElementById('resetProductsBtn');
+resetBtn.addEventListener('mouseenter', () => resetBtn.style.color = 'var(--ink)');
+resetBtn.addEventListener('mouseleave', () => resetBtn.style.color = 'var(--ink-soft)');
+resetBtn.addEventListener('click', () => {
+  const rows = productBody.querySelectorAll('tr:not(.empty-row)');
+  if (rows.length > 0 && !confirm('Refresh the product list back to the default products? Any edits will be lost.')) return;
+  productBody.innerHTML = '';
+  localStorage.removeItem(STORAGE_KEY);
+  defaultProducts.forEach(addProductRow);
+  productBody.closest('table').style.transition = 'opacity .15s ease';
+  productBody.closest('table').style.opacity = '0.3';
+  requestAnimationFrame(() => { productBody.closest('table').style.opacity = '1'; });
+});
+
+const refreshBtn = document.getElementById('refreshProductsBtn');
+refreshBtn.title = 'Clear the product list';
+refreshBtn.addEventListener('mouseenter', () => refreshBtn.style.color = 'var(--ink)');
+refreshBtn.addEventListener('mouseleave', () => refreshBtn.style.color = 'var(--ink-soft)');
+refreshBtn.addEventListener('click', () => {
+  const rows = productBody.querySelectorAll('tr:not(.empty-row)');
+  if (rows.length > 0 && !confirm('Clear all products from the list?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  renderEmptyProductState();
+});
+
+function readProducts() {
+  const rows = [...productBody.querySelectorAll('tr')].filter(r => !r.classList.contains('empty-row'));
+  const products = [];
+  for (const row of rows) {
+    const name = row.querySelector('.pname').value.trim();
+    const min = parseInt(row.querySelector('.pmin').value, 10);
+    const max = parseInt(row.querySelector('.pmax').value, 10);
+    if (!name || !Number.isFinite(min) || !Number.isFinite(max) || min <= 0 || max < min) continue;
+    products.push({ name, min: Math.round(min), max: Math.round(max) });
+  }
+  return products;
+}
+
+/* ---------------------------------------------------------
+   CONSTRAINT-SOLVING ENGINE
+   Goal: choose a subset of products, assign integer unit
+   prices within [min,max] and integer quantities, such that
+   sum(price*qty) === target EXACTLY.
+
+   Strategy: for a chosen subset of size k, randomly assign
+   price & quantity to the first k-1 products, then solve the
+   LAST product exactly by finding a divisor pair of the
+   remainder that fits its price range (O(sqrt(remainder))).
+   Retries across random subsets / sizes within a time budget.
+--------------------------------------------------------- */
+
+function shuffleArr(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// mid-biased random integer in [min,max] (triangular distribution)
+function midBiasedInt(min, max) {
+  if (min === max) return min;
+  const r = (Math.random() + Math.random() + Math.random()) / 3; // biases toward 0.5
+  return Math.round(min + r * (max - min));
+}
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// find valid (price, qty) pairs where price*qty === n, price in [min,max], qty in [1, qtyCap]
+function findDivisorPairs(n, min, max, qtyCap) {
+  const out = [];
+  if (n <= 0) return out;
+  const limit = Math.floor(Math.sqrt(n));
+  for (let i = 1; i <= limit; i++) {
+    if (n % i !== 0) continue;
+    const j = n / i;
+    if (i >= min && i <= max && j >= 1 && j <= qtyCap) out.push({ price: i, qty: j });
+    if (j !== i && j >= min && j <= max && i >= 1 && i <= qtyCap) out.push({ price: j, qty: i });
+  }
+  return out;
+}
+
+// Fallback: best achievable single-product match, minimizing the leftover
+// remainder. Used only when the exact multi-product solver finds nothing.
+function bestSingleProductMatch(products, target) {
+  const capsToTry = [300, 800, 2000, 5000, 20000, 200000];
+  let best = null;
+  for (const cap of capsToTry) {
+    for (const p of products) {
+      const minPriceForCap = Math.max(p.min, Math.ceil(target / cap));
+      const maxPrice = p.max;
+      if (minPriceForCap > maxPrice) continue;
+      const rangeSize = maxPrice - minPriceForCap + 1;
+      const tryPrice = (price) => {
+        const qty = Math.floor(target / price);
+        if (qty < 1) return;
+        const remainder = target - price * qty;
+        if (!best || remainder < best.remainder) {
+          best = { name: p.name, price, qty, amount: price * qty, remainder };
+        }
+      };
+      if (rangeSize <= 20000) {
+        for (let price = minPriceForCap; price <= maxPrice; price++) tryPrice(price);
+      } else {
+        for (let s = 0; s < 20000; s++) tryPrice(randInt(minPriceForCap, maxPrice));
+      }
+      if (best && best.remainder === 0) break;
+    }
+    if (best && (best.remainder === 0 || cap >= 800)) break;
+  }
+  return best;
+}
+
+// Builds a guaranteed-exact invoice around a single product by topping up
+// any leftover with a Handling Fee (>10) or a Round Off (<=10) line.
+function buildFallbackInvoice(products, target) {
+  const match = bestSingleProductMatch(products, target);
+  if (!match) return null; // target is below every product's minimum price - truly impossible
+
+  const lines = [{ name: match.name, price: match.price, qty: match.qty, amount: match.amount }];
+  let feeType = 'none';
+  if (match.remainder > 10) {
+    lines.push({ name: 'Handling Fee', price: null, qty: null, amount: match.remainder, isAdjustment: true });
+    feeType = 'handling';
+  } else if (match.remainder > 0) {
+    lines.push({ name: 'Round Off', price: null, qty: null, amount: match.remainder, isAdjustment: true });
+    feeType = 'roundoff';
+  }
+  return { lines, productsUsed: 1, target, fallback: true, feeType };
+}
+
+function solveInvoice(products, target, timeBudgetMs = 1800) {
+  const deadline = performance.now() + timeBudgetMs;
+  const n = products.length;
+  if (n === 0 || !Number.isFinite(target) || target <= 0) return null;
+
+  const QTY_CAP = 800; // keep quantities realistic
+
+  for (let k = 1; k <= n; k++) {
+    const attemptsForK = Math.min(600, 60 * k + 40);
+    for (let attempt = 0; attempt < attemptsForK; attempt++) {
+      if (performance.now() > deadline) return null;
+
+      const subset = shuffleArr(products).slice(0, k);
+      const lastIndex = randInt(0, k - 1);
+      const free = subset.filter((_, i) => i !== lastIndex);
+      const last = subset[lastIndex];
+
+      let sum = 0;
+      const lines = [];
+      let feasible = true;
+
+      for (const p of free) {
+        const price = midBiasedInt(p.min, p.max);
+        // cap qty so remaining budget stays plausible for other products
+        const roughCap = Math.max(2, Math.min(QTY_CAP, Math.floor(target / (price * k))));
+        const qty = randInt(1, Math.max(1, roughCap * 2 > QTY_CAP ? QTY_CAP : roughCap * 2 || 1));
+        const amount = price * qty;
+        if (amount <= 0 || amount >= target) { feasible = false; break; }
+        sum += amount;
+        lines.push({ name: p.name, price, qty, amount });
+      }
+      if (!feasible) continue;
+
+      const remainder = target - sum;
+      if (remainder <= 0) continue;
+
+      const pairs = findDivisorPairs(remainder, last.min, last.max, Math.max(QTY_CAP, 5000));
+      if (pairs.length === 0) continue;
+
+      const mid = (last.min + last.max) / 2;
+      pairs.sort((a, b) => Math.abs(a.price - mid) - Math.abs(b.price - mid));
+      const top = pairs.slice(0, Math.min(3, pairs.length));
+      const chosen = top[randInt(0, top.length - 1)];
+      lines.push({ name: last.name, price: chosen.price, qty: chosen.qty, amount: chosen.price * chosen.qty });
+
+      const total = lines.reduce((s, l) => s + l.amount, 0);
+      if (total === target) {
+        return { lines: shuffleArr(lines), productsUsed: k, target };
+      }
+    }
+  }
+  return null;
+}
+
+/* ---------------------------------------------------------
+   RENDERING
+--------------------------------------------------------- */
+const sheet = document.getElementById('sheet');
+const regenBtn = document.getElementById('regenBtn');
+const exportBtn = document.getElementById('exportBtn');
+const copyBtn = document.getElementById('copyBtn');
+const printBtn = document.getElementById('printBtn');
+const solveInfo = document.getElementById('solveInfo');
+const solveMeta = document.getElementById('solveMeta');
+const solveTime = document.getElementById('solveTime');
+
+let currentResult = null;
+let invoiceCounter = Math.floor(1000 + Math.random() * 8999);
+
+function fmt(n) {
+  return '₹' + Number(n).toLocaleString('en-IN');
+}
+
+function renderInvoice(result) {
+  currentResult = result;
+  invoiceCounter++;
+  const dateStr = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: '2-digit' });
+  const rows = result.lines.map(l => {
+    if (l.isAdjustment) {
+      return `
+        <tr class="adj-row">
+          <td class="name">${escapeHtml(l.name)}</td>
+          <td class="num">—</td>
+          <td class="num">—</td>
+          <td class="num">${fmt(l.amount)}</td>
+        </tr>
+      `;
+    }
+    return `
+      <tr>
+        <td class="name">${escapeHtml(l.name)}</td>
+        <td class="num">${fmt(l.price)}</td>
+        <td class="num">${l.qty.toLocaleString('en-IN')}</td>
+        <td class="num">${fmt(l.amount)}</td>
+      </tr>
+    `;
+  }).join('');
+
+  let stampText = '✓ Exact Match';
+  let stampNote = '';
+  if (result.fallback) {
+    if (result.feeType === 'handling') {
+      stampText = '✓ Balanced';
+      stampNote = 'Handling fee added to match total';
+    } else if (result.feeType === 'roundoff') {
+      stampText = '✓ Balanced';
+      stampNote = 'Rounded to match total';
+    }
+  }
+
+  sheet.innerHTML = `
+    <div class="inv-head">
+      <div>
+        <h2>Purchase Invoice</h2>
+        <div class="inv-meta">
+          Invoice No. <span class="inv-no">INV-${invoiceCounter}</span><br>
+          Date: ${dateStr}<br>
+          Line items: ${result.lines.length} of ${document.querySelectorAll('#productBody tr').length} products
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div class="stamp">${stampText}</div>
+        ${stampNote ? `<div style="font-size:10.5px;color:var(--ink-soft);margin-top:6px;">${stampNote}</div>` : ''}
+      </div>
+    </div>
+    <table class="invoice">
+      <thead>
+        <tr><th>Product</th><th class="num">Unit Price</th><th class="num">Qty</th><th class="num">Amount</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr>
+          <td class="label" colspan="3">Grand Total</td>
+          <td class="num">${fmt(result.target)}</td>
+        </tr>
+      </tfoot>
+    </table>
+  `;
+  [regenBtn, exportBtn, copyBtn, printBtn].forEach(b => b.disabled = false);
+}
+
+function renderFail(target) {
+  currentResult = null;
+  sheet.innerHTML = `
+    <div class="fail-state">
+      <div class="glyph">⚠</div>
+      <h3>No exact invoice can be generated using the current product ranges.</h3>
+      <p>The solver could not find a combination of whole-number prices and quantities within your product ranges that sums exactly to ${fmt(target)}. Try widening a price range, adding another product, or adjusting the total.</p>
+    </div>
+  `;
+  [exportBtn, copyBtn, printBtn].forEach(b => b.disabled = true);
+  regenBtn.disabled = false;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function runSolve() {
+  const target = Math.round(parseFloat(document.getElementById('invoiceTotal').value));
+  const products = readProducts();
+
+  if (!Number.isFinite(target) || target <= 0) {
+    alert('Please enter a valid invoice total.');
+    return;
+  }
+  if (products.length === 0) {
+    alert('Please add at least one product with a valid Min/Max price.');
+    return;
+  }
+
+  const t0 = performance.now();
+  let result = solveInvoice(products, target);
+  let usedFallback = false;
+
+  if (!result) {
+    // Exact multi-product combination not found - fall back to a single
+    // product topped up with a Handling Fee (>Rs 10) or Round Off (<=Rs 10).
+    result = buildFallbackInvoice(products, target);
+    usedFallback = true;
+  }
+  const t1 = performance.now();
+
+  if (result) {
+    // final validation before display, per spec - every line, including
+    // adjustment rows, must sum exactly to the target.
+    const verifiedTotal = result.lines.reduce((s, l) => s + l.amount, 0);
+    if (verifiedTotal !== target) {
+      renderFail(target); // should never happen, safety net
+    } else {
+      renderInvoice(result);
+      solveInfo.style.display = 'flex';
+      if (usedFallback) {
+        solveMeta.textContent = result.feeType === 'handling'
+          ? `No exact combination found — used 1 product + handling fee`
+          : result.feeType === 'roundoff'
+          ? `No exact combination found — used 1 product + round off`
+          : `Solved with 1 product`;
+      } else {
+        solveMeta.textContent = `Solved with ${result.productsUsed} of ${products.length} products`;
+      }
+      solveTime.textContent = `Solved in ${(t1 - t0).toFixed(0)} ms`;
+    }
+  } else {
+    renderFail(target);
+    solveInfo.style.display = 'flex';
+    solveMeta.textContent = `Searched ${products.length} products — target is below every product's minimum price`;
+    solveTime.textContent = `Gave up after ${(t1 - t0).toFixed(0)} ms`;
+  }
+}
+
+document.getElementById('generateBtn').addEventListener('click', runSolve);
+regenBtn.addEventListener('click', runSolve);
+
+/* ---------------------------------------------------------
+   EXPORT / COPY / PRINT
+--------------------------------------------------------- */
+exportBtn.addEventListener('click', () => {
+  if (!currentResult) return;
+  const rows = currentResult.lines.map(l => ({
+    Product: l.name, 'Unit Price': l.isAdjustment ? '' : l.price, Quantity: l.isAdjustment ? '' : l.qty, Amount: l.amount
+  }));
+  rows.push({ Product: 'Grand Total', 'Unit Price': '', Quantity: '', Amount: currentResult.target });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Invoice');
+  XLSX.writeFile(wb, `invoice_${currentResult.target}.xlsx`);
+});
+
+copyBtn.addEventListener('click', async () => {
+  if (!currentResult) return;
+  let text = 'Product\tUnit Price\tQty\tAmount\n';
+  currentResult.lines.forEach(l => {
+    text += `${l.name}\t${l.isAdjustment ? '' : l.price}\t${l.isAdjustment ? '' : l.qty}\t${l.amount}\n`;
+  });
+  text += `Grand Total\t\t\t${currentResult.target}\n`;
+  try {
+    await navigator.clipboard.writeText(text);
+    const old = copyBtn.textContent;
+    copyBtn.textContent = '✓ Copied';
+    setTimeout(() => copyBtn.textContent = old, 1400);
+  } catch (e) {
+    alert('Could not copy automatically. Please select the table manually.');
+  }
+});
+
+printBtn.addEventListener('click', () => window.print());
+</script>
+</body>
+</html>
