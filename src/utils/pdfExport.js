@@ -40,6 +40,44 @@ export function renderInvisibleTextLayer(doc, element, scale) {
 }
 
 /**
+ * Robustly normalizes cloned DOM styles before html2canvas rasterization
+ * to completely eliminate character overlaps, line collisions, and font misalignments (especially in Safari).
+ */
+function normalizeClonedDocForCanvas(clonedDoc) {
+  const allElements = clonedDoc.querySelectorAll('*');
+  allElements.forEach((el) => {
+    try {
+      if (el.nodeType !== 1) return;
+      const cs = window.getComputedStyle(el);
+
+      // 1. Force explicit numeric pixel line-height so wrapped lines never collide at y=0
+      const lh = cs.lineHeight;
+      if (!lh || lh === 'normal' || !lh.endsWith('px')) {
+        const fs = parseFloat(cs.fontSize) || 12;
+        el.style.lineHeight = `${Math.round(fs * 1.35)}px`;
+      } else {
+        el.style.lineHeight = lh;
+      }
+
+      // 2. Normalise letter and word spacing to prevent character stacking
+      if (cs.letterSpacing && cs.letterSpacing !== 'normal') {
+        el.style.letterSpacing = 'normal';
+      }
+      if (cs.wordSpacing && cs.wordSpacing !== 'normal') {
+        el.style.wordSpacing = 'normal';
+      }
+
+      // 3. For table cells and headers, ensure natural wrapping without clipping
+      if (el.tagName === 'TH' || el.tagName === 'TD') {
+        el.style.verticalAlign = cs.verticalAlign || 'middle';
+      }
+    } catch {
+      // ignore
+    }
+  });
+}
+
+/**
  * Capture an element using html-to-image (native browser SVG foreignObject rasterizer),
  * with rock-solid fallback to html2canvas with letter-spacing normalisation.
  */
@@ -59,7 +97,7 @@ export async function captureElementToCanvas(element, scale = 2.5) {
     const canvas = await htmlToImage.toCanvas(element, {
       pixelRatio: scale,
       backgroundColor: '#ffffff',
-      cacheBust: true,
+      cacheBust: false,
       skipFonts: true,
       fontEmbedCSS: '',
     });
@@ -67,20 +105,14 @@ export async function captureElementToCanvas(element, scale = 2.5) {
   } catch (primaryErr) {
     console.warn('html-to-image failed, falling back to html2canvas:', primaryErr);
 
-    // Attempt 2: html2canvas with onclone font copying, letter-spacing reset to prevent word collapsing
+    // Attempt 2: html2canvas with full DOM normalisation
     return await html2canvas(element, {
       scale: scale,
       useCORS: true,
       backgroundColor: '#ffffff',
       logging: false,
       onclone: (clonedDoc) => {
-        // Reset letter-spacing on all elements to normal so html2canvas renders words as complete phrases instead of single letters
-        const allElements = clonedDoc.querySelectorAll('*');
-        allElements.forEach((el) => {
-          if (el.style && el.style.letterSpacing && el.style.letterSpacing !== 'normal') {
-            el.style.letterSpacing = 'normal';
-          }
-        });
+        normalizeClonedDocForCanvas(clonedDoc);
       },
     });
   }
@@ -114,7 +146,7 @@ export async function captureBillCanvas(element) {
       return await htmlToImage.toCanvas(element, {
         pixelRatio: 2.5,
         backgroundColor: '#ffffff',
-        cacheBust: true,
+        cacheBust: false,
         skipFonts: true,
         fontEmbedCSS: '',
         width: A4_WIDTH_PX,
@@ -122,7 +154,17 @@ export async function captureBillCanvas(element) {
       });
     } catch (e) {
       console.warn('htmlToImage toCanvas failed, using captureElementToCanvas fallback:', e);
-      return await captureElementToCanvas(element, 2.5);
+      return await html2canvas(element, {
+        scale: 2.5,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: A4_WIDTH_PX,
+        height: Math.max(element.scrollHeight, A4_HEIGHT_PX),
+        onclone: (clonedDoc) => {
+          normalizeClonedDocForCanvas(clonedDoc);
+        },
+      });
     }
   } finally {
     if (outer) {
@@ -163,7 +205,7 @@ export async function exportBillToPng(element, filename = 'Transport_Bill.png') 
       dataUrl = await htmlToImage.toPng(element, {
         pixelRatio: 2.5,
         backgroundColor: '#ffffff',
-        cacheBust: true,
+        cacheBust: false,
         skipFonts: true,
         fontEmbedCSS: '',
         width: A4_WIDTH_PX,

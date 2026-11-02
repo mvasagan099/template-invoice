@@ -28,11 +28,57 @@ export const BILL_TEMPLATE_COMPONENTS = {
   'E-Way Bill': EWayBill,
 };
 
+const ORIGINAL_TEMPLATE_ROW_TARGETS = {
+  'Lorry Receipt': 21,
+  'Consignment Note': 19,
+  'Goods Receipt': 22,
+  'Parcel Booking': 21,
+  'Freight Bill': 9,
+  'Bilty (Duplicate)': 17,
+  'Bilty': 17,
+  'Trip Challan': 10,
+  'Modern Transport Bill': 13,
+  'Station Receipt': 23,
+  'Transport Memo': 19,
+  'E-Way Bill': 20,
+};
+
+function getPaddedDataForTemplate(data, templateName) {
+  const targetRows = ORIGINAL_TEMPLATE_ROW_TARGETS[templateName];
+  if (!targetRows) return data;
+  const userGoods = data.goods || [];
+  if (userGoods.length >= targetRows) return data;
+
+  const paddedGoods = [...userGoods];
+  const emptyCount = targetRows - userGoods.length;
+  for (let i = 0; i < emptyCount; i++) {
+    paddedGoods.push({
+      id: `pad-${i}`,
+      itemName: '',
+      description: '',
+      quantity: '',
+      packages: '',
+      weight: '',
+      unit: '',
+      rate: '',
+      freight: '',
+      loading: '',
+      unloading: '',
+      insurance: '',
+      otherCharges: '',
+      gstPercent: '',
+      remarks: '',
+    });
+  }
+  return { ...data, goods: paddedGoods };
+}
+
 export function BillA4Preview({ data, totals }) {
   const templateName = data.settings?.template || 'Lorry Receipt';
   const OriginalComponent = BILL_TEMPLATE_COMPONENTS[templateName];
   if (OriginalComponent) {
-    return <OriginalComponent data={data} totals={totals} />;
+    const paddedData = getPaddedDataForTemplate(data, templateName);
+    return <OriginalComponent data={paddedData} totals={totals} />;
   }
 
   const extendedConfig = EXTENDED_BILL_CONFIGS[templateName];
@@ -40,5 +86,6 @@ export function BillA4Preview({ data, totals }) {
     return <UniversalBillTemplate data={data} totals={totals} config={extendedConfig} />;
   }
 
-  return <LorryReceipt data={data} totals={totals} />;
+  const paddedData = getPaddedDataForTemplate(data, 'Lorry Receipt');
+  return <LorryReceipt data={paddedData} totals={totals} />;
 }
