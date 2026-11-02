@@ -564,6 +564,7 @@ export function UniversalBillTemplate({ data, totals, config }) {
         <table
           style={{
             width: '100%',
+            height: '100%',
             borderCollapse: 'collapse',
             fontSize: '10px',
             textAlign: 'left',
@@ -613,6 +614,7 @@ export function UniversalBillTemplate({ data, totals, config }) {
                   <tr
                     key={item.id || idx}
                     style={{
+                      height: '30px',
                       borderBottom: `1px solid ${theme.border ? '#e2e8f0' : '#cbd5e1'}`,
                       background: idx % 2 === 1 && layout === 'modern-card' ? '#f8fafc' : 'transparent',
                     }}
@@ -652,16 +654,40 @@ export function UniversalBillTemplate({ data, totals, config }) {
                 );
               })
             ) : (
-              <tr style={{ borderBottom: border }}>
-                <td style={{ padding: '12px 8px', borderRight: border, textAlign: 'center' }}>1</td>
-                <td style={{ padding: '12px 8px', borderRight: border, textAlign: 'center' }}>—</td>
-                <td style={{ padding: '12px 8px', borderRight: border }}>Commercial Freight Transport</td>
-                <td style={{ padding: '12px 8px', borderRight: border, textAlign: 'right' }}>—</td>
-                <td style={{ padding: '12px 8px', borderRight: border, textAlign: 'right' }}>—</td>
-                <td style={{ padding: '12px 8px', borderRight: border, textAlign: 'right' }}>0.00</td>
-                <td style={{ padding: '12px 8px', textAlign: 'right' }}>0.00</td>
+              <tr style={{ height: '30px', borderBottom: border }}>
+                <td style={{ padding: '6px 8px', borderRight: border, textAlign: 'center' }}>1</td>
+                <td style={{ padding: '6px 8px', borderRight: border, textAlign: 'center' }}>—</td>
+                <td style={{ padding: '6px 8px', borderRight: border }}>Commercial Freight Transport</td>
+                <td style={{ padding: '6px 8px', borderRight: border, textAlign: 'right' }}>—</td>
+                <td style={{ padding: '6px 8px', borderRight: border, textAlign: 'right' }}>—</td>
+                <td style={{ padding: '6px 8px', borderRight: border, textAlign: 'right' }}>0.00</td>
+                <td style={{ padding: '6px 8px', textAlign: 'right' }}>0.00</td>
               </tr>
             )}
+
+            {/* Fill empty ruled grid rows so the table fills the middle of the bill professionally */}
+            {Array.from({ length: Math.max(0, 16 - (o && o.length > 0 ? o.length : 1)) }).map((_, rIdx) => {
+              const rowNum = (o && o.length > 0 ? o.length : 1) + rIdx + 1;
+              return (
+                <tr
+                  key={`empty-${rIdx}`}
+                  style={{
+                    height: '28px',
+                    borderBottom: `1px solid ${theme.border ? '#e2e8f0' : '#cbd5e1'}`,
+                  }}
+                >
+                  <td style={{ padding: '4px 8px', borderRight: border, textAlign: 'center', color: '#94a3b8' }}>
+                    {rowNum}
+                  </td>
+                  <td style={{ padding: '4px 8px', borderRight: border, textAlign: 'center', color: '#cbd5e1' }}>—</td>
+                  <td style={{ padding: '4px 8px', borderRight: border }}>&nbsp;</td>
+                  <td style={{ padding: '4px 8px', borderRight: border, textAlign: 'right', color: '#cbd5e1' }}>—</td>
+                  <td style={{ padding: '4px 8px', borderRight: border, textAlign: 'right', color: '#cbd5e1' }}>—</td>
+                  <td style={{ padding: '4px 8px', borderRight: border, textAlign: 'right', color: '#cbd5e1' }}>—</td>
+                  <td style={{ padding: '4px 8px', textAlign: 'right', color: '#cbd5e1' }}>—</td>
+                </tr>
+              );
+            })}
           </tbody>
           <tfoot>
             <tr
@@ -707,14 +733,14 @@ export function UniversalBillTemplate({ data, totals, config }) {
         <div
           style={{
             borderRight: border,
-            padding: '8px 12px',
+            padding: '10px 14px 12px 14px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
           }}
         >
           <div>
-            <div style={{ fontSize: '10px', color: '#475569', marginBottom: '2px' }}>
+            <div style={{ fontSize: '10px', color: '#475569', marginBottom: '3px' }}>
               <strong>Amount in Words:</strong>
             </div>
             <div
@@ -724,8 +750,8 @@ export function UniversalBillTemplate({ data, totals, config }) {
                 color: primary,
                 textTransform: 'capitalize',
                 background: secondary,
-                padding: '4px 8px',
-                borderRadius: '2px',
+                padding: '5px 10px',
+                borderRadius: '3px',
                 border: '1px solid #e2e8f0',
                 marginBottom: '8px',
               }}
@@ -738,10 +764,10 @@ export function UniversalBillTemplate({ data, totals, config }) {
               style={{
                 fontSize: '9px',
                 color: '#475569',
-                borderLeft: `2.5px solid ${primary}`,
-                paddingLeft: '6px',
-                marginBottom: '6px',
-                lineHeight: '1.3',
+                borderLeft: `3px solid ${primary}`,
+                paddingLeft: '8px',
+                marginBottom: '8px',
+                lineHeight: '1.4',
               }}
             >
               <strong>GST Status:</strong> Person liable to pay GST is Consignor / Consignee under
@@ -749,17 +775,18 @@ export function UniversalBillTemplate({ data, totals, config }) {
             </div>
 
             {/* Specific Template Terms */}
-            <div style={{ fontSize: '8.5px', color: '#64748b', lineHeight: '1.3' }}>
+            <div style={{ fontSize: '8.5px', color: '#64748b', lineHeight: '1.35', marginBottom: '8px' }}>
               <strong>Notice:</strong> {config.terms || 'Goods are accepted for carriage at owner\'s risk. Transporter is not responsible for en-route delays due to natural events, road accidents or police/RTO checking. Demurrage chargeable after 48 hours of vehicle arrival.'}
             </div>
           </div>
 
           <div
             style={{
-              marginTop: '6px',
-              fontSize: '8px',
-              color: '#94a3b8',
+              paddingTop: '6px',
+              fontSize: '8.5px',
+              color: '#64748b',
               fontStyle: 'italic',
+              lineHeight: '1.3',
             }}
           >
             * This consignment note is issued subject to the provisions of the Carriage by Road Act, 2007.
@@ -863,7 +890,7 @@ export function UniversalBillTemplate({ data, totals, config }) {
         style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr 1fr 1.3fr',
-          minHeight: '65px',
+          minHeight: '75px',
           background: bg,
           fontSize: '9.5px',
           fontWeight: '600',
@@ -873,14 +900,14 @@ export function UniversalBillTemplate({ data, totals, config }) {
         <div
           style={{
             borderRight: border,
-            padding: '6px 8px',
+            padding: '8px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
           }}
         >
           <div style={{ color: '#64748b' }}>Booking Date & Time</div>
-          <div style={{ borderTop: '1px dashed #94a3b8', paddingTop: '3px' }}>
+          <div style={{ borderTop: '1px dashed #94a3b8', paddingTop: '4px' }}>
             Consignor's Signature
           </div>
         </div>
@@ -888,14 +915,14 @@ export function UniversalBillTemplate({ data, totals, config }) {
         <div
           style={{
             borderRight: border,
-            padding: '6px 8px',
+            padding: '8px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
           }}
         >
           <div style={{ color: '#64748b' }}>Vehicle Inspected</div>
-          <div style={{ borderTop: '1px dashed #94a3b8', paddingTop: '3px' }}>
+          <div style={{ borderTop: '1px dashed #94a3b8', paddingTop: '4px' }}>
             Driver's Signature
           </div>
         </div>
@@ -903,21 +930,21 @@ export function UniversalBillTemplate({ data, totals, config }) {
         <div
           style={{
             borderRight: border,
-            padding: '6px 8px',
+            padding: '8px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
           }}
         >
           <div style={{ color: '#64748b' }}>Received in Good Condition</div>
-          <div style={{ borderTop: '1px dashed #94a3b8', paddingTop: '3px' }}>
+          <div style={{ borderTop: '1px dashed #94a3b8', paddingTop: '4px' }}>
             Consignee Stamp & Sign
           </div>
         </div>
 
         <div
           style={{
-            padding: '6px 8px',
+            padding: '8px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
@@ -927,7 +954,7 @@ export function UniversalBillTemplate({ data, totals, config }) {
           <div style={{ color: primary, fontWeight: '700' }}>
             For {s(n.companyName) || 'Transport Company'}
           </div>
-          <div style={{ borderTop: '1px dashed #94a3b8', paddingTop: '3px', color: '#0f172a' }}>
+          <div style={{ borderTop: '1px dashed #94a3b8', paddingTop: '4px', color: '#0f172a' }}>
             Authorised Signatory
           </div>
         </div>
