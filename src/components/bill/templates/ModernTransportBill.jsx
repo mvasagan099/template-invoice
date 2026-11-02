@@ -12,7 +12,7 @@ export function ModernTransportBill({ data: e, totals: t }) {
       vehicle: a,
       goods: o,
     } = e,
-    s = (e) => e || ``,
+    s = (e) => e ?? ``,
     c = (t.gstAmount || 0) / 2,
     l = (t.gstAmount || 0) / 2,
     u = (t.loading || 0) + (t.unloading || 0);
@@ -83,7 +83,7 @@ export function ModernTransportBill({ data: e, totals: t }) {
                       letterSpacing: `-0.3px`,
                       lineHeight: `1`,
                     },
-                    children: s(n.companyName) || `TRANSPORT COMPANY`,
+                    children: s(n.companyName),
                   }),
                   (0, y.jsxs)(`div`, {
                     style: {
@@ -149,7 +149,7 @@ export function ModernTransportBill({ data: e, totals: t }) {
                       `LR No: `,
                       (0, y.jsx)(`strong`, {
                         style: { color: `#1a1a2e` },
-                        children: s(n.lrNo) || `________`,
+                        children: s(n.lrNo),
                       }),
                     ],
                   }),
@@ -163,7 +163,7 @@ export function ModernTransportBill({ data: e, totals: t }) {
                       `Bill No: `,
                       (0, y.jsx)(`strong`, {
                         style: { color: `#1a1a2e` },
-                        children: s(n.billNo) || `________`,
+                        children: s(n.billNo),
                       }),
                     ],
                   }),
@@ -211,13 +211,13 @@ export function ModernTransportBill({ data: e, totals: t }) {
             },
             children: [
               (0, y.jsxs)(`span`, {
-                children: [`Vehicle: `, s(a.number) || `N/A`],
+                children: [`Vehicle: `, s(a.number)],
               }),
               (0, y.jsxs)(`span`, {
-                children: [`Driver: `, s(a.driverName) || `N/A`],
+                children: [`Driver: `, s(a.driverName)],
               }),
               (0, y.jsxs)(`span`, {
-                children: [`Driver Ph: `, s(a.driverMobile) || `N/A`],
+                children: [`Driver Ph: `, s(a.driverMobile)],
               }),
               (0, y.jsxs)(`span`, {
                 style: { marginLeft: `auto` },
@@ -549,7 +549,7 @@ export function ModernTransportBill({ data: e, totals: t }) {
                     children: `Freight Payable To:`,
                   }),
                   ` `,
-                  s(r.name) || s(n.companyName) || `________`,
+                  s(r.name),
                   (0, y.jsx)(`br`, {}),
                   (0, y.jsx)(`strong`, {
                     style: { color: `#1a1a2e` },
@@ -612,7 +612,7 @@ export function ModernTransportBill({ data: e, totals: t }) {
                         children: [
                           (0, y.jsx)(`td`, {
                             style: { padding: `5px 12px`, color: `#6b7280` },
-                            children: `CGST @ 2.5%`,
+                            children: `CGST`,
                           }),
                           (0, y.jsx)(`td`, {
                             style: {
@@ -629,7 +629,7 @@ export function ModernTransportBill({ data: e, totals: t }) {
                         children: [
                           (0, y.jsx)(`td`, {
                             style: { padding: `5px 12px`, color: `#6b7280` },
-                            children: `SGST @ 2.5%`,
+                            children: `SGST`,
                           }),
                           (0, y.jsx)(`td`, {
                             style: {
@@ -743,7 +743,7 @@ export function ModernTransportBill({ data: e, totals: t }) {
               `Consignor Signature`,
               `Driver`,
               `Receiver`,
-              `For ${s(n.companyName) || `Company`}`,
+              `For ${s(n.companyName)}`,
             ].map((e) =>
               (0, y.jsxs)(
                 `div`,

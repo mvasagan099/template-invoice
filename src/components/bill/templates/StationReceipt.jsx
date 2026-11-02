@@ -12,7 +12,7 @@ export function StationReceipt({ data: e, totals: t }) {
       vehicle: a,
       goods: o,
     } = e,
-    s = (e) => e || ``;
+    s = (e) => e ?? ``;
   return (0, y.jsxs)(`div`, {
     id: `bill-a4-preview`,
     style: {
@@ -65,7 +65,7 @@ export function StationReceipt({ data: e, totals: t }) {
                       letterSpacing: `2px`,
                       textTransform: `uppercase`,
                     },
-                    children: s(n.companyName) || `INDIAN RAILWAYS`,
+                    children: s(n.companyName),
                   }),
                   (0, y.jsx)(`div`, {
                     style: {
@@ -132,7 +132,7 @@ export function StationReceipt({ data: e, totals: t }) {
                   lineHeight: `1`,
                   marginTop: `2px`,
                 },
-                children: s(r.city) || `________`,
+                children: s(r.city),
               }),
             ],
           }),
@@ -175,7 +175,7 @@ export function StationReceipt({ data: e, totals: t }) {
                   lineHeight: `1`,
                   marginTop: `2px`,
                 },
-                children: s(i.city) || `________`,
+                children: s(i.city),
               }),
             ],
           }),
@@ -193,7 +193,7 @@ export function StationReceipt({ data: e, totals: t }) {
                     style: { color: `#6b7280` },
                     children: `GR No.`,
                   }),
-                  (0, y.jsx)(`strong`, { children: s(n.lrNo) || `________` }),
+                  (0, y.jsx)(`strong`, { children: s(n.lrNo) }),
                 ],
               }),
               (0, y.jsxs)(`div`, {
@@ -222,7 +222,7 @@ export function StationReceipt({ data: e, totals: t }) {
                     children: `Time`,
                   }),
                   (0, y.jsx)(`strong`, {
-                    children: s(n.bookingTime) || `--:--`,
+                    children: s(n.bookingTime),
                   }),
                 ],
               }),
@@ -233,7 +233,7 @@ export function StationReceipt({ data: e, totals: t }) {
                     style: { color: `#6b7280` },
                     children: `Bill No.`,
                   }),
-                  (0, y.jsx)(`strong`, { children: s(n.billNo) || `________` }),
+                  (0, y.jsx)(`strong`, { children: s(n.billNo) }),
                 ],
               }),
             ],
@@ -332,10 +332,10 @@ export function StationReceipt({ data: e, totals: t }) {
         },
         children: [
           (0, y.jsxs)(`span`, {
-            children: [`VEHICLE: `, s(a.number) || `N/A`],
+            children: [`VEHICLE: `, s(a.number)],
           }),
           (0, y.jsxs)(`span`, {
-            children: [`DRIVER: `, s(a.driverName) || `N/A`],
+            children: [`DRIVER: `, s(a.driverName)],
           }),
           (0, y.jsxs)(`span`, { children: [`DELIVERY: `, s(n.deliveryDate)] }),
         ],
@@ -612,7 +612,7 @@ export function StationReceipt({ data: e, totals: t }) {
                 style: { marginTop: `4px`, fontSize: `8px`, color: `#9ca3af` },
                 children: [
                   `Subject to `,
-                  s(n.city) || `________`,
+                  s(n.city),
                   ` Jurisdiction. Goods carried at Owner's Risk. Claims within 24 hrs. E&OE.`,
                 ],
               }),

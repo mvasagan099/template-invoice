@@ -24,7 +24,7 @@ export function ConsignmentNote({ data: e, totals: t }) {
       vehicle: a,
       goods: o,
     } = e,
-    s = (e) => e || ``,
+    s = (e) => e ?? ``,
     c = t.freight || 0,
     l = (t.loading || 0) + (t.unloading || 0),
     u = Number(t.otherCharges) || 0,
@@ -55,7 +55,7 @@ export function ConsignmentNote({ data: e, totals: t }) {
             children: [
               (0, y.jsx)(`strong`, { children: `PAN NO.` }),
               ` `,
-              n.gst ? n.gst.substring(2, 12) : `XXXXXXXXXX`,
+              n.gst ? n.gst.substring(2, 12) : ``,
             ],
           }),
           (0, y.jsxs)(`div`, {
@@ -120,7 +120,7 @@ export function ConsignmentNote({ data: e, totals: t }) {
                   fontFamily: `Impact, Arial Black, sans-serif`,
                   lineHeight: `1`,
                 },
-                children: s(n.companyName) || `BABA TRANSPORT COMPANY`,
+                children: s(n.companyName),
               }),
               (0, y.jsx)(`div`, {
                 style: {
@@ -1097,7 +1097,7 @@ export function ConsignmentNote({ data: e, totals: t }) {
                 fontSize: `10px`,
                 textTransform: `uppercase`,
               },
-              children: [`For `, s(n.companyName) || `BABA TRANSPORT COMPANY`],
+              children: [`For `, s(n.companyName)],
             }),
           }),
         ],

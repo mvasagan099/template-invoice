@@ -24,7 +24,7 @@ export function Bilty({ data: e, totals: t }) {
       vehicle: a,
       goods: o,
     } = e,
-    s = (e) => e || ``,
+    s = (e) => e ?? ``,
     c = (e, t = `140px`) =>
       (0, y.jsx)(`span`, {
         style: {
@@ -97,7 +97,7 @@ export function Bilty({ data: e, totals: t }) {
                   lineHeight: `1`,
                   letterSpacing: `-1px`,
                 },
-                children: s(n.lrNo) || `\xA0`,
+                children: s(n.lrNo),
               }),
               (0, y.jsx)(`div`, {
                 style: {
@@ -140,7 +140,7 @@ export function Bilty({ data: e, totals: t }) {
                   color: `#1a1a1a`,
                   lineHeight: `1.1`,
                 },
-                children: s(n.companyName) || `TRANSPORT COMPANY`,
+                children: s(n.companyName),
               }),
               (0, y.jsx)(`div`, {
                 style: {
@@ -217,7 +217,7 @@ export function Bilty({ data: e, totals: t }) {
               }),
               (0, y.jsx)(`div`, {
                 style: { fontWeight: `700`, fontSize: `14px`, color: `#333` },
-                children: s(n.billNo) || `\xA0`,
+                children: s(n.billNo),
               }),
               (0, y.jsx)(`div`, {
                 style: {
@@ -233,7 +233,7 @@ export function Bilty({ data: e, totals: t }) {
               }),
               (0, y.jsx)(`div`, {
                 style: { fontWeight: `700`, fontSize: `12px`, color: `#333` },
-                children: s(a.number) || `\xA0`,
+                children: s(a.number),
               }),
             ],
           }),
@@ -774,7 +774,7 @@ export function Bilty({ data: e, totals: t }) {
               `Consignor Signature`,
               `Receiver Signature`,
               `Booking Clerk`,
-              `For ${s(n.companyName) || `Transport Co.`}`,
+              `For ${s(n.companyName)}`,
             ].map((e) =>
               (0, y.jsx)(
                 `td`,

@@ -24,7 +24,7 @@ export function GoodsReceipt({ data: e, totals: t }) {
       vehicle: a,
       goods: o,
     } = e,
-    s = (e) => e || ``,
+    s = (e) => e ?? ``,
     c = (e, t = `160px`) =>
       (0, y.jsx)(`span`, {
         style: {
@@ -61,7 +61,7 @@ export function GoodsReceipt({ data: e, totals: t }) {
             style: { fontStyle: `italic` },
             children: [
               `All Disputes Subject to `,
-              n.city || `Delhi`,
+              n.city,
               ` Jurisdiction`,
             ],
           }),
@@ -109,7 +109,7 @@ export function GoodsReceipt({ data: e, totals: t }) {
                   fontFamily: `Impact, Arial Black, sans-serif`,
                   lineHeight: `1`,
                 },
-                children: s(n.companyName) || `R G TRANSPORT SERVICES`,
+                children: s(n.companyName),
               }),
               (0, y.jsxs)(`div`, {
                 style: { fontSize: `10px`, marginTop: `4px` },
@@ -688,7 +688,7 @@ export function GoodsReceipt({ data: e, totals: t }) {
             },
             children: [
               `खराब कंडीशन पर जमीन नज़र बिन पैसे लिखे सील के नम्बर से मिलान कर लें। यदि नम्बर में गड़बड़ हो तो सील खोलने से पहले `,
-              n.phone || `9555260722`,
+              n.phone,
               ` पर सम्पर्क करें।`,
             ],
           }),
@@ -704,7 +704,7 @@ export function GoodsReceipt({ data: e, totals: t }) {
               fontWeight: `900`,
               fontSize: `9px`,
             },
-            children: [`For `, s(n.companyName) || `R G TRANSPORT SERVICES`],
+            children: [`For `, s(n.companyName)],
           }),
         ],
       }),

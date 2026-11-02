@@ -12,7 +12,7 @@ export function EWayBill({ data: e, totals: t }) {
       vehicle: a,
       goods: o,
     } = e,
-    s = (e) => e || ``;
+    s = (e) => e ?? ``;
   return (0, y.jsxs)(`div`, {
     id: `bill-a4-preview`,
     style: {
@@ -81,7 +81,7 @@ export function EWayBill({ data: e, totals: t }) {
               }),
               (0, y.jsx)(`div`, {
                 style: { fontWeight: `700`, marginTop: `2px` },
-                children: s(n.companyName) || `TRANSPORT COMPANY`,
+                children: s(n.companyName),
               }),
               n.gst &&
                 (0, y.jsxs)(`div`, {
@@ -99,11 +99,11 @@ export function EWayBill({ data: e, totals: t }) {
           background: `#eff6ff`,
         },
         children: [
-          { label: `EWB No.`, value: s(n.lrNo) || `________` },
-          { label: `Document No.`, value: s(n.billNo) || `________` },
+          { label: `EWB No.`, value: s(n.lrNo) },
+          { label: `Document No.`, value: s(n.billNo) },
           { label: `Document Date`, value: s(n.bookingDate) },
-          { label: `Mode of Transport`, value: `Road` },
-          { label: `Vehicle No.`, value: s(a.number) || `________` },
+          { label: `Mode of Transport`, value: s(n.modeOfTransport) },
+          { label: `Vehicle No.`, value: s(a.number) },
         ].map(({ label: e, value: t }) =>
           (0, y.jsxs)(
             `div`,
@@ -215,7 +215,7 @@ export function EWayBill({ data: e, totals: t }) {
                         style: { color: `#1e40af` },
                         children: `State Code:`,
                       }),
-                      ` 27`,
+                      s(r.gst).slice(0, 2),
                     ],
                   }),
                 ],
@@ -291,7 +291,7 @@ export function EWayBill({ data: e, totals: t }) {
                         style: { color: `#1e40af` },
                         children: `State Code:`,
                       }),
-                      ` 27`,
+                      s(i.gst).slice(0, 2),
                     ],
                   }),
                 ],
@@ -329,7 +329,7 @@ export function EWayBill({ data: e, totals: t }) {
                 style: { color: `#1e40af`, fontWeight: `700`, fontSize: `9px` },
                 children: `Vehicle Number: `,
               }),
-              (0, y.jsx)(`strong`, { children: s(a.number) || `________` }),
+              (0, y.jsx)(`strong`, { children: s(a.number) }),
             ],
           }),
           (0, y.jsxs)(`div`, {
@@ -343,7 +343,7 @@ export function EWayBill({ data: e, totals: t }) {
                 style: { color: `#1e40af`, fontWeight: `700`, fontSize: `9px` },
                 children: `From: `,
               }),
-              (0, y.jsx)(`strong`, { children: s(r.city) || `________` }),
+              (0, y.jsx)(`strong`, { children: s(r.city) }),
             ],
           }),
           (0, y.jsxs)(`div`, {
@@ -357,7 +357,7 @@ export function EWayBill({ data: e, totals: t }) {
                 style: { color: `#1e40af`, fontWeight: `700`, fontSize: `9px` },
                 children: `To: `,
               }),
-              (0, y.jsx)(`strong`, { children: s(i.city) || `________` }),
+              (0, y.jsx)(`strong`, { children: s(i.city) }),
             ],
           }),
           (0, y.jsxs)(`div`, {
@@ -368,7 +368,7 @@ export function EWayBill({ data: e, totals: t }) {
                 children: `Delivery Date: `,
               }),
               (0, y.jsx)(`strong`, {
-                children: s(n.deliveryDate) || `________`,
+                children: s(n.deliveryDate),
               }),
             ],
           }),
@@ -451,7 +451,7 @@ export function EWayBill({ data: e, totals: t }) {
                           fontFamily: `monospace`,
                           fontSize: `10px`,
                         },
-                        children: (e.gstPercent, `9965`),
+                        children: s(e.hsn),
                       }),
                       (0, y.jsx)(`td`, {
                         style: {
@@ -468,7 +468,7 @@ export function EWayBill({ data: e, totals: t }) {
                           textAlign: `center`,
                           color: `#6b7280`,
                         },
-                        children: s(e.unit) || `NOS`,
+                        children: s(e.unit),
                       }),
                       (0, y.jsx)(`td`, {
                         style: {
@@ -486,7 +486,7 @@ export function EWayBill({ data: e, totals: t }) {
                           padding: `5px 8px`,
                           textAlign: `center`,
                         },
-                        children: r ? `${r}%` : `—`,
+                        children: e.gstPercent !== `` ? `${r}%` : ``,
                       }),
                       (0, y.jsx)(`td`, {
                         style: {
@@ -543,7 +543,7 @@ export function EWayBill({ data: e, totals: t }) {
                 children: `Total Value of Goods:`,
               }),
               ` `,
-              t.subtotal ? `₹ ${t.subtotal.toFixed(2)}` : `₹ 0.00`,
+              t.subtotal ? `₹ ${t.subtotal.toFixed(2)}` : ``,
             ],
           }),
           (0, y.jsxs)(`div`, {
@@ -559,7 +559,7 @@ export function EWayBill({ data: e, totals: t }) {
                 children: `CGST:`,
               }),
               ` `,
-              t.gstAmount ? `₹ ${(t.gstAmount / 2).toFixed(2)}` : `₹ 0.00`,
+              t.gstAmount ? `₹ ${(t.gstAmount / 2).toFixed(2)}` : ``,
             ],
           }),
           (0, y.jsxs)(`div`, {
@@ -575,7 +575,7 @@ export function EWayBill({ data: e, totals: t }) {
                 children: `SGST:`,
               }),
               ` `,
-              t.gstAmount ? `₹ ${(t.gstAmount / 2).toFixed(2)}` : `₹ 0.00`,
+              t.gstAmount ? `₹ ${(t.gstAmount / 2).toFixed(2)}` : ``,
             ],
           }),
           (0, y.jsx)(`div`, {
@@ -594,7 +594,7 @@ export function EWayBill({ data: e, totals: t }) {
               },
               children: [
                 `TOTAL VALUE: `,
-                t.grandTotal ? `₹ ${t.grandTotal.toFixed(2)}` : `₹ 0.00`,
+                t.grandTotal ? `₹ ${t.grandTotal.toFixed(2)}` : ``,
               ],
             }),
           }),
@@ -622,7 +622,7 @@ export function EWayBill({ data: e, totals: t }) {
                 style: { marginTop: `4px` },
                 children: [
                   `Subject to `,
-                  s(n.city) || `________`,
+                  s(n.city),
                   ` Jurisdiction. E&OE.`,
                 ],
               }),

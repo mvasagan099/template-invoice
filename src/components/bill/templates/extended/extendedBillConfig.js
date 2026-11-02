@@ -1,6 +1,7 @@
 // extendedBillConfig.js - Extended Transport Bill & Bilty Configurations
 // All templates are visually distinct, fully functional, and cater to real-world logistics workflows.
 import { EXTRA_500_BILL_CONFIGS } from './extendedBillConfigExtra500.js';
+import { EXTRA_300_BILL_CONFIGS } from './extendedBillConfigExtra300.js';
 
 export const EXTENDED_BILL_CONFIGS = {
   "Consignee Copy (Classic)": {
@@ -2004,4 +2005,5 @@ export const EXTENDED_BILL_CONFIGS = {
     terms: "Stack bay location assigned: Bay-Row-Tier recorded in Terminal Operating System (TOS).",
   },
   ...EXTRA_500_BILL_CONFIGS,
+  ...EXTRA_300_BILL_CONFIGS,
 };

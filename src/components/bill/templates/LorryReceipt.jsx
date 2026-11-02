@@ -24,7 +24,7 @@ export function LorryReceipt({ data: e, totals: t }) {
       vehicle: a,
       goods: o,
     } = e,
-    s = (e) => e || ``;
+    s = (e) => e ?? ``;
   return (0, y.jsxs)(`div`, {
     id: `bill-a4-preview`,
     style: {
@@ -84,7 +84,7 @@ export function LorryReceipt({ data: e, totals: t }) {
                   textTransform: `uppercase`,
                   lineHeight: `1`,
                 },
-                children: s(n.companyName) || `Auto Transport Company`,
+                children: s(n.companyName),
               }),
               (0, y.jsxs)(`div`, {
                 style: { fontSize: `10px`, marginTop: `4px` },
@@ -164,7 +164,7 @@ export function LorryReceipt({ data: e, totals: t }) {
                   color: `#1a3a7c`,
                   lineHeight: `1`,
                 },
-                children: s(n.lrNo) || `______`,
+                children: s(n.lrNo),
               }),
               (0, y.jsx)(`div`, {
                 style: {
@@ -174,11 +174,9 @@ export function LorryReceipt({ data: e, totals: t }) {
                 },
                 children:
                   n.lrNo &&
-                  (0, y.jsx)(vk.default, {
-                    value: n.lrNo,
-                    width: 1,
-                    height: 24,
-                    displayValue: !1,
+                  (0, y.jsx)(`span`, {
+                    style: { fontFamily: `monospace`, letterSpacing: `2px` },
+                    children: n.lrNo,
                   }),
               }),
               (0, y.jsxs)(`div`, {
@@ -715,7 +713,7 @@ export function LorryReceipt({ data: e, totals: t }) {
                 style: { marginTop: `4px`, fontSize: `8px`, color: `#444` },
                 children: [
                   `Subject to `,
-                  n.city || `________`,
+                  n.city,
                   ` Jurisdiction only. Goods are carried at owner's risk. Claims within 24 hrs. E&OE.`,
                 ],
               }),

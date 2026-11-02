@@ -24,7 +24,7 @@ export function TripChallan({ data: e, totals: t }) {
       vehicle: a,
       goods: o,
     } = e,
-    s = (e) => e || ``,
+    s = (e) => e ?? ``,
     c = (e, t = `120px`) =>
       (0, y.jsx)(`span`, {
         style: {
@@ -91,7 +91,7 @@ export function TripChallan({ data: e, totals: t }) {
                   textTransform: `uppercase`,
                   letterSpacing: `1px`,
                 },
-                children: s(n.companyName) || `TRANSPORT COMPANY`,
+                children: s(n.companyName),
               }),
               (0, y.jsx)(`div`, {
                 style: { fontSize: `10px`, marginTop: `3px` },
@@ -158,8 +158,8 @@ export function TripChallan({ data: e, totals: t }) {
       (0, y.jsx)(`div`, {
         style: { display: `flex`, borderBottom: `2px solid #000` },
         children: [
-          { label: `LR Number`, value: s(n.lrNo) || `\xA0` },
-          { label: `Bill No.`, value: s(n.billNo) || `\xA0` },
+          { label: `LR Number`, value: s(n.lrNo) },
+          { label: `Bill No.`, value: s(n.billNo) },
           { label: `Date of Booking`, value: Ak(n.bookingDate) },
           {
             label: `Expected Delivery`,
@@ -243,7 +243,7 @@ export function TripChallan({ data: e, totals: t }) {
                         fontWeight: `900`,
                         marginTop: `2px`,
                       },
-                      children: s(a.number) || `\xA0`,
+                      children: s(a.number),
                     }),
                   ],
                 }),
@@ -264,7 +264,7 @@ export function TripChallan({ data: e, totals: t }) {
                     }),
                     (0, y.jsx)(`div`, {
                       style: { fontWeight: `700`, marginTop: `2px` },
-                      children: s(a.driverName) || `\xA0`,
+                      children: s(a.driverName),
                     }),
                   ],
                 }),
@@ -285,7 +285,7 @@ export function TripChallan({ data: e, totals: t }) {
                     }),
                     (0, y.jsx)(`div`, {
                       style: { fontWeight: `700`, marginTop: `2px` },
-                      children: s(a.driverMobile) || `\xA0`,
+                      children: s(a.driverMobile),
                     }),
                   ],
                 }),
@@ -306,7 +306,7 @@ export function TripChallan({ data: e, totals: t }) {
                     }),
                     (0, y.jsx)(`div`, {
                       style: { fontWeight: `700`, marginTop: `2px` },
-                      children: s(a.driverLicense) || `\xA0`,
+                      children: s(a.driverLicense),
                     }),
                   ],
                 }),
@@ -424,7 +424,7 @@ export function TripChallan({ data: e, totals: t }) {
               }),
               (0, y.jsx)(`div`, {
                 style: { fontWeight: `900`, fontSize: `14px` },
-                children: s(r.city) || `\xA0`,
+                children: s(r.city),
               }),
               (0, y.jsx)(`div`, {
                 style: { fontSize: `10px`, color: `#333`, marginTop: `2px` },
@@ -525,7 +525,7 @@ export function TripChallan({ data: e, totals: t }) {
               }),
               (0, y.jsx)(`div`, {
                 style: { fontWeight: `900`, fontSize: `14px` },
-                children: s(i.city) || `\xA0`,
+                children: s(i.city),
               }),
               (0, y.jsx)(`div`, {
                 style: { fontSize: `10px`, color: `#333`, marginTop: `2px` },
@@ -939,7 +939,7 @@ export function TripChallan({ data: e, totals: t }) {
               },
               { label: `Delivered by`, sub: `` },
               {
-                label: `For ${s(n.companyName) || `Transport Co.`}`,
+                label: `For ${s(n.companyName)}`,
                 sub: `Authorised Signatory`,
               },
             ].map(({ label: e, sub: t }) =>

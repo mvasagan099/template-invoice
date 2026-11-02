@@ -1,966 +1,201 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { numberToIndianWords } from '../../../../utils/currency.js';
+import { getBillDesign } from './billDesigns.js';
+import './billDesigns.css';
 
-function formatDate(val) {
-  if (!val) return '';
-  try {
-    return new Date(val).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  } catch {
-    return val;
-  }
+const hasValue = (v) => v != null && String(v).trim() !== '';
+const text = (v) => v ?? '';
+const CHARGES = ['freight', 'loading', 'unloading', 'insurance', 'otherCharges'];
+const hasCharges = (rows, fields = CHARGES) => rows.some((row) => fields.some((key) => hasValue(row[key])));
+const amount = (v) => Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const rowTotal = (row) => CHARGES.reduce((sum, key) => sum + (Number(row[key]) || 0), 0);
+const address = (p) => [p.address, p.city, p.state, p.pincode].filter(hasValue).join(', ');
+function date(v) {
+  if (!v) return '';
+  const parsed = new Date(`${v}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? v : parsed.toLocaleDateString('en-IN');
 }
-
+function Field({ label, value, large = false }) {
+  return <div className={`bd-field${large ? ' bd-field-large' : ''}`}><span>{label}</span><strong>{text(value)}</strong></div>;
+}
+function Identity({ data }) {
+  const n = data.transportDetails;
+  return <div className="bd-identity" data-part="identity">
+    {data.settings?.logo && <img className="bd-logo" src={data.settings.logo} alt="Company logo" />}
+    <div className="bd-identity-copy"><div className="bd-company">{text(n.companyName)}</div>
+      <div className="bd-contact">{[n.branch, n.city, n.state].filter(hasValue).join(' · ')}</div>
+      <div className="bd-contact">{[n.phone, n.email].filter(hasValue).join(' · ')}</div>
+      {n.gst && <div className="bd-contact"><b>GSTIN</b> {n.gst}</div>}
+      {n.website && <div className="bd-contact">{n.website}</div>}
+    </div></div>;
+}
+function DocumentTitle({ title }) {
+  // Catalog geography and status badges must not masquerade as entered bill data.
+  return <div className="bd-document-title" data-part="title"><div className="bd-kicker">TRANSPORT DOCUMENT</div><div className="bd-title">{title}</div></div>;
+}
+function References({ data, table = false }) {
+  const n = data.transportDetails;
+  const fields = [['LR / Bilty No.', n.lrNo], ['Bill No.', n.billNo], ['Booking Date', date(n.bookingDate)], ['Delivery Date', date(n.deliveryDate)]];
+  if (table) return <table className="bd-reference-table" data-part="references"><tbody>{fields.map(([label, value]) => <tr key={label}><th>{label}</th><td>{text(value)}</td></tr>)}</tbody></table>;
+  return <div className="bd-references" data-part="references">{fields.map(([label, value]) => <Field key={label} label={label} value={value} />)}</div>;
+}
+function BrandHeader({ data, variant, title: documentTitle }) {
+  const identity = <Identity data={data} />, title = <DocumentTitle title={documentTitle} />, refs = <References data={data} />, table = <References data={data} table />;
+  const headers = [
+    <><div className="bd-header-pair">{identity}{title}</div>{refs}</>,
+    <><div className="bd-header-crest">{title}{identity}</div><div className="bd-header-rule">{refs}</div></>,
+    <><div className="bd-header-split">{identity}<div>{title}{table}</div></div></>,
+    <><div className="bd-header-banner">{title}</div><div className="bd-header-pair">{identity}{table}</div></>,
+    <><div className="bd-header-rail"><div>{title}{identity}</div><aside>{refs}</aside></div></>,
+    <><div className="bd-ledger-title">{title}</div><div className="bd-ledger-header"><div>{identity}</div><div>{refs}</div></div></>,
+    <><div className="bd-header-corner"><div>{table}</div><div>{identity}{title}</div></div></>,
+    <><div className="bd-editorial-title">{title}</div><div className="bd-editorial-brand">{identity}</div><div className="bd-editorial-refs">{refs}</div></>,
+    <><div className="bd-stationery-brand">{identity}</div><div className="bd-stationery-bottom"><div>{title}</div><div>{refs}</div></div></>,
+    <><div className="bd-certificate-header"><div>{identity}</div><div className="bd-certificate-title">{title}</div><div>{table}</div></div></>,
+  ];
+  return <div className={`bd-header bd-header-${variant}`} data-section="header">{headers[variant]}</div>;
+}
+function Party({ party, label, marker }) {
+  return <div className="bd-party"><div className="bd-section-heading"><span className="bd-section-number">{marker}</span>{label}</div>
+    <div className="bd-party-name">{text(party.name)}</div><div className="bd-address">{address(party)}</div>
+    <div className="bd-party-contact"><Field label="GSTIN" value={party.gst} /><Field label="Mobile" value={party.mobile} /></div></div>;
+}
+function Parties({ data, variant }) {
+  if (variant === 'table') return <div className="bd-party-register" data-section="parties"><div className="bd-section-heading">PARTY REGISTER</div>
+    <table><thead><tr><th>Party</th><th>Name & address</th><th>GSTIN / Mobile</th></tr></thead><tbody>
+      {[[data.consignor, 'Consignor (Sender)'], [data.consignee, 'Consignee (Receiver)']].map(([p, label]) => <tr key={label}><th>{label}</th><td><b>{text(p.name)}</b><div>{address(p)}</div></td><td>{text(p.gst)}<div>{text(p.mobile)}</div></td></tr>)}
+    </tbody></table></div>;
+  return <div className={`bd-parties bd-parties-${variant}`} data-section="parties"><Party party={data.consignor} label="Consignor (Sender)" marker="01" /><Party party={data.consignee} label="Consignee (Receiver)" marker="02" /></div>;
+}
+function Route({ data, variant }) {
+  return <div className={`bd-route bd-route-${variant}`} data-section="route"><div className="bd-route-stations"><Field label="From" value={data.consignor.city} large /><span className="bd-route-link" aria-hidden="true">→</span><Field label="To" value={data.consignee.city} large /></div>
+    <div className="bd-route-booking"><Field label="Booking Time" value={data.transportDetails.bookingTime} /><Field label="Payment Mode" value={data.transportDetails.paymentMode} /></div></div>;
+}
+function Vehicle({ data, variant }) {
+  const v = data.vehicle;
+  return <div className={`bd-vehicle bd-vehicle-${variant}`} data-section="vehicle"><div className="bd-section-heading">VEHICLE & DRIVER</div><div className="bd-vehicle-fields">
+    <Field label="Vehicle / Lorry No." value={v.number} /><Field label="Driver Name" value={v.driverName} /><Field label="Driver Mobile" value={v.driverMobile} /><Field label="Driving Licence" value={v.driverLicense} />
+  </div></div>;
+}
+const columns = {
+  serial: { label: '#', width: '5%' }, description: { label: 'Goods / Description' }, packages: { label: 'Pkgs', width: '8%' }, quantity: { label: 'Qty', width: '8%' }, weight: { label: 'Weight', width: '12%' },
+  rate: { label: 'Rate (₹)', width: '12%' }, freight: { label: 'Freight (₹)', width: '13%' }, total: { label: 'Total (₹)', width: '14%' }, loading: { label: 'Loading', width: '11%' }, unloading: { label: 'Unloading', width: '11%' }, other: { label: 'Ins. / Other', width: '13%' }, remarks: { label: 'Remarks', width: '20%' },
+};
+const tableColumns = [
+  ['serial', 'description', 'packages', 'weight', 'rate', 'freight', 'total'],
+  ['serial', 'packages', 'quantity', 'weight', 'description', 'remarks'],
+  ['serial', 'description', 'freight', 'loading', 'unloading', 'other', 'total'],
+];
+const itemExtras = [['quantity', 'Qty'], ['packages', 'Pkgs'], ['weight', 'Weight'], ['rate', 'Rate'], ['freight', 'Freight'], ['gstPercent', 'GST']];
+const extraColumns = [['quantity', 'gstPercent'], ['rate', 'freight', 'gstPercent'], ['quantity', 'packages', 'weight', 'rate', 'gstPercent']];
+function Description({ item, extras = ['quantity', 'gstPercent'] }) {
+  return <div className="bd-item-description"><b>{text(item.itemName)}</b>{item.description && <div>{item.description}</div>}
+    <div className="bd-item-meta">{itemExtras.filter(([key]) => extras.includes(key) && hasValue(item[key])).map(([key, label]) => <span key={key}>{label}: {text(item[key])}{key === 'gstPercent' ? '%' : key === 'weight' && item.unit ? ` ${item.unit}` : ''}</span>)}</div>
+  </div>;
+}
+function Cell({ field, item, index, empty, variant = 0 }) {
+  if (empty) return null;
+  if (field === 'serial') return index + 1;
+  if (field === 'description') return <><Description item={item} extras={extraColumns[variant]} />{variant !== 1 && item.remarks && <div className="bd-item-remark">{item.remarks}</div>}</>;
+  if (field === 'weight') return hasValue(item.weight) ? [item.weight, item.unit].filter(hasValue).join(' ') : '';
+  if (field === 'other') return hasCharges([item], ['insurance', 'otherCharges']) ? amount((Number(item.insurance) || 0) + (Number(item.otherCharges) || 0)) : '';
+  if (field === 'total') return hasCharges([item]) ? amount(rowTotal(item)) : '';
+  if (['rate', ...CHARGES].includes(field)) return hasValue(item[field]) ? amount(item[field]) : '';
+  return text(item[field]);
+}
+function QuantityLedger({ rows }) {
+  return <table className="bd-quantity-ledger"><colgroup><col style={{ width: '5%' }} /><col /><col style={{ width: '9%' }} /><col style={{ width: '9%' }} /><col style={{ width: '15%' }} /><col style={{ width: '14%' }} /></colgroup>
+    <thead><tr><th>#</th><th>Goods / Description</th><th>Qty</th><th>Pkgs</th><th>Weight</th><th>Rate (₹)</th></tr></thead>
+    <tbody>{rows.map(({ item, index, empty }) => <React.Fragment key={index}>
+      <tr className="bd-quantity-main"><td rowSpan={2}>{empty ? '' : index + 1}</td><td><Description item={item} extras={['gstPercent']} />{item.remarks && <div className="bd-item-remark">{item.remarks}</div>}</td>
+        {['quantity', 'packages', 'weight', 'rate'].map((key) => <td key={key}><Cell field={key} item={item} empty={empty} /></td>)}
+      </tr><tr className="bd-quantity-finance"><td colSpan={3}><div className="bd-quantity-charges">{['loading', 'unloading', 'insurance', 'otherCharges'].map((key) => <Field key={key} label={{ loading: 'Loading', unloading: 'Unloading', insurance: 'Insurance', otherCharges: 'Other' }[key]} value={<Cell field={key} item={item} empty={empty} />} />)}</div></td>
+        <td><Field label="Freight (₹)" value={<Cell field="freight" item={item} empty={empty} />} /></td><td><Field label="Line Total (₹)" value={<Cell field="total" item={item} empty={empty} />} /></td>
+      </tr></React.Fragment>)}</tbody>
+  </table>;
+}
+function ChargeSlips({ rows }) {
+  const fields = ['freight', 'loading', 'unloading', 'insurance', 'otherCharges', 'total'];
+  const labels = ['Freight', 'Loading', 'Unloading', 'Insurance', 'Other', 'Line Total'];
+  return <div className="bd-charge-slips">{rows.map(({ item, index, empty }) => <div className="bd-charge-slip" key={index}>
+    <div className="bd-slip-heading"><span>{empty ? '' : String(index + 1).padStart(2, '0')}</span><div><Description item={item} extras={['quantity', 'packages', 'weight', 'rate', 'gstPercent']} />{item.remarks && <div className="bd-item-remark">{item.remarks}</div>}</div></div>
+    <table><thead><tr>{labels.map((label) => <th key={label}>{label} (₹)</th>)}</tr></thead><tbody><tr>{fields.map((key) => <td key={key}><Cell field={key} item={item} empty={empty} /></td>)}</tr></tbody></table>
+  </div>)}</div>;
+}
+function Goods({ data, variant }) {
+  const used = (data.goods || []).filter((item) => Object.entries(item).some(([key, v]) => key !== 'id' && hasValue(v)));
+  const rows = Array.from({ length: Math.max(used.length, variant >= 3 ? 4 : 7) }, (_, index) => ({ item: used[index] || {}, empty: index >= used.length, index }));
+  return <div className={`bd-goods bd-goods-${variant}`} data-section="goods"><div className="bd-section-heading">GOODS PARTICULARS <span>SAID TO CONTAIN</span></div>
+    {variant < 3 ? <table className="bd-goods-table"><colgroup>{tableColumns[variant].map((key) => <col key={key} style={{ width: columns[key].width }} />)}</colgroup>
+      <thead>{variant === 2 && <tr className="bd-charge-groups"><th colSpan={2}>Cargo</th><th colSpan={4}>Freight & Handling Breakdown</th><th>Line Value</th></tr>}<tr>{tableColumns[variant].map((key) => <th key={key} className={`bd-cell-${key}`}>{columns[key].label}</th>)}</tr></thead>
+      <tbody>{rows.map(({ item, index, empty }) => <tr key={index}>{tableColumns[variant].map((key) => <td key={key} className={`bd-cell-${key}`}><Cell field={key} item={item} index={index} empty={empty} variant={variant} /></td>)}</tr>)}</tbody>
+    </table> : variant === 3 ? <div className="bd-cargo-cards">{rows.map(({ item, index, empty }) => <div className="bd-cargo-card" key={index}>
+      <div className="bd-cargo-index">{empty ? '' : String(index + 1).padStart(2, '0')}</div><div className="bd-cargo-content"><Description item={item} /><div className="bd-cargo-measures"><Field label="Packages" value={item.packages} /><Field label="Weight" value={<Cell field="weight" item={item} />} /><Field label="Rate (₹)" value={<Cell field="rate" item={item} />} /></div>{item.remarks && <div className="bd-item-remark">{item.remarks}</div>}</div>
+      <div className="bd-cargo-price"><Field label="Freight (₹)" value={<Cell field="freight" item={item} />} /><Field label="Total (₹)" value={<Cell field="total" item={item} />} /></div></div>)}</div>
+      : variant === 5 ? <QuantityLedger rows={rows} /> : variant === 6 ? <ChargeSlips rows={rows} />
+      : <div className="bd-item-journals">{rows.map(({ item, index, empty }) => <div className="bd-item-journal" key={index}><div className="bd-journal-heading"><span>{empty ? '' : index + 1}</span><Description item={item} /><Field label="Line Total (₹)" value={<Cell field="total" item={item} />} /></div>
+        <div className="bd-journal-detail">{['packages', 'weight', 'rate', 'freight'].map((key) => <Field key={key} label={columns[key].label} value={<Cell field={key} item={item} />} />)}<Field label="Remarks" value={item.remarks} /></div></div>)}</div>}
+  </div>;
+}
+function Summary({ data, totals, variant }) {
+  const goods = data.goods || [];
+  const charge = (key) => hasCharges(goods, [key]) ? amount(totals[key]) : '';
+  const fields = [['Basic Freight', charge('freight')], ['Loading', charge('loading')], ['Unloading', charge('unloading')], ['Insurance', charge('insurance')], ['Other Charges', charge('otherCharges')]];
+  if (hasCharges(goods)) fields.push(['Subtotal', amount(totals.subtotal)]);
+  if (Number(totals.gstAmount)) {
+    const interstate = data.consignor.state && data.consignee.state && data.consignor.state.trim().toLowerCase() !== data.consignee.state.trim().toLowerCase();
+    if (interstate) fields.push(['IGST', amount(totals.gstAmount)]);
+    else fields.push(['CGST', amount(totals.gstAmount / 2)], ['SGST', amount(totals.gstAmount / 2)]);
+  }
+  const total = hasCharges(goods) ? `₹ ${amount(totals.grandTotal)}` : '';
+  return <div className={`bd-summary bd-summary-${variant}`} data-section="summary"><div className="bd-section-heading">FREIGHT SETTLEMENT</div>
+    {variant === 'band' ? <div className="bd-summary-band">{fields.map(([label, value]) => <Field key={label} label={label} value={value} />)}<Field label="Grand Total" value={total} large /></div>
+      : <><dl>{fields.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl><div className="bd-grand-total"><span>Grand Total</span><strong>{total}</strong></div></>}
+  </div>;
+}
+function Notes({ data, totals }) {
+  return <div className="bd-notes" data-section="notes"><div className="bd-section-heading">AMOUNT IN WORDS</div><div className="bd-words">{hasCharges(data.goods || []) ? numberToIndianWords(totals.grandTotal) : ''}</div><div className="bd-section-heading">NOTES / INSTRUCTIONS</div><div className="bd-instructions">{text(data.transportDetails.terms)}</div></div>;
+}
+function Signatures({ data, page }) {
+  const labels = page % 3 === 0 ? ['Consignor', 'Driver', 'Consignee', 'Authorised Signatory'] : ['Booked By', 'Received By', 'Authorised Signatory'];
+  return <div className={`bd-signatures bd-signatures-${page % 3}`} data-section="signatures">{labels.map((label, index) => <div key={label}><div className="bd-signature-name">{index === labels.length - 1 && data.transportDetails.companyName ? `For ${data.transportDetails.companyName}` : ''}</div><div className="bd-signature-line" /><span>{label}</span></div>)}</div>;
+}
 export function UniversalBillTemplate({ data, totals, config }) {
-  const { transportDetails: n, consignor: r, consignee: i, vehicle: a, goods: o = [] } = data;
-  const s = (v) => v || '';
-
-  const theme = config.theme || {};
-  const primary = theme.primary || '#0f172a';
-  const secondary = theme.secondary || '#f8fafc';
-  const border = theme.border || '2px solid #000000';
-  const font = theme.font || 'Arial, Helvetica, sans-serif';
-  const headerFont = theme.headerFont || font;
-  const bg = theme.bg || '#ffffff';
-  const layout = config.layout || 'classic-lr';
-
-  // Goods calculations
-  const totalPackages = o.reduce((acc, row) => acc + (Number(row.packages) || Number(row.quantity) || 0), 0);
-  const totalWeight = o.reduce((acc, row) => acc + (parseFloat(row.weight) || 0), 0);
-  const totalWeightUnit = o.find((row) => row.unit)?.unit || 'Kgs';
-
-  const halfGst = (totals.gstAmount || 0) / 2;
-  const isInterState = r.state && i.state && r.state.trim().toLowerCase() !== i.state.trim().toLowerCase();
-
-  // Words for grand total
-  const grandTotalRounded = Math.round(totals.grandTotal || 0);
-  const amountInWords = numberToIndianWords(grandTotalRounded);
-
-  return (
-    <div
-      id="bill-a4-preview"
-      style={{
-        width: '100%',
-        height: '1123px',
-        maxHeight: '1123px',
-        background: bg,
-        fontFamily: font,
-        color: '#000000',
-        fontSize: '11px',
-        border: border,
-        boxSizing: 'border-box',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Background Watermark */}
-      {data.settings?.watermark && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%) rotate(-32deg)',
-            fontSize: '56px',
-            fontWeight: '900',
-            color: 'rgba(0, 0, 0, 0.07)',
-            textTransform: 'uppercase',
-            letterSpacing: '12px',
-            pointerEvents: 'none',
-            zIndex: 1,
-            whiteSpace: 'nowrap',
-            userSelect: 'none',
-          }}
-        >
-          {data.settings.watermark}
-        </div>
-      )}
-
-      {/* TOP HEADER / JURISDICTION / COPY BAR */}
-      <div
-        style={{
-          borderBottom: border,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '4px 10px',
-          background: layout === 'dualtone-docket' ? primary : secondary,
-          color: layout === 'dualtone-docket' ? '#ffffff' : primary,
-          fontSize: '9.5px',
-          fontWeight: '600',
-          letterSpacing: '0.4px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>{config.tagline || 'Subject to local jurisdiction | Goods booked at Owner\'s Risk'}</span>
-          {layout === 'cold-chain' && (
-            <span
-              style={{
-                background: '#0284c7',
-                color: '#fff',
-                padding: '1px 6px',
-                borderRadius: '3px',
-                fontSize: '8.5px',
-                fontWeight: '700',
-              }}
-            >
-              ❄️ REEFER (2°C - 8°C)
-            </span>
-          )}
-          {layout === 'heavy-freight' && (
-            <span
-              style={{
-                background: '#f59e0b',
-                color: '#000',
-                padding: '1px 6px',
-                borderRadius: '3px',
-                fontSize: '8.5px',
-                fontWeight: '800',
-              }}
-            >
-              ⚠️ HEAVY HAULAGE / ODC
-            </span>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {config.copyBadge && (
-            <span
-              style={{
-                background: config.copyBadge.bg || '#eff6ff',
-                color: config.copyBadge.color || primary,
-                border: config.copyBadge.border || `1.5px solid ${primary}`,
-                padding: '2px 8px',
-                fontSize: '9.5px',
-                fontWeight: '800',
-                letterSpacing: '0.8px',
-                textTransform: 'uppercase',
-                borderRadius: layout === 'modern-card' ? '4px' : '2px',
-              }}
-            >
-              {config.copyBadge.text}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* MAIN BRANDING & TITLE SECTION */}
-      <div
-        style={{
-          borderBottom: border,
-          display: 'flex',
-          alignItems: 'stretch',
-          background: layout === 'dualtone-docket' ? primary : '#ffffff',
-          color: layout === 'dualtone-docket' ? '#ffffff' : '#000000',
-        }}
-      >
-        {/* Company Logo (if present) */}
-        {data.settings?.logo && (
-          <div
-            style={{
-              width: '80px',
-              borderRight: border,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              background: '#ffffff',
-              padding: '6px',
-            }}
-          >
-            <img
-              src={data.settings.logo}
-              alt="Logo"
-              style={{
-                maxWidth: '68px',
-                maxHeight: '68px',
-                objectFit: 'contain',
-              }}
-            />
-          </div>
-        )}
-
-        {/* Company Identity */}
-        <div
-          style={{
-            flex: 1,
-            padding: '10px 14px',
-            textAlign: layout === 'corporate-clean' ? 'left' : 'center',
-            borderRight: border,
-          }}
-        >
-          <div
-            style={{
-              fontFamily: headerFont,
-              fontSize: '24px',
-              fontWeight: '900',
-              color: layout === 'dualtone-docket' ? '#ffffff' : primary,
-              letterSpacing: '0.5px',
-              textTransform: 'uppercase',
-              lineHeight: '1.1',
-              marginBottom: '3px',
-            }}
-          >
-            {s(n.companyName) || 'UNIVERSAL LOGISTICS & TRANSPORT CORP'}
-          </div>
-
-          <div
-            style={{
-              fontSize: '10px',
-              color: layout === 'dualtone-docket' ? '#e2e8f0' : '#4b5563',
-              lineHeight: '1.4',
-            }}
-          >
-            {s(n.branch)} {n.city ? `— ${n.city}` : ''} {n.state ? `, ${n.state}` : ''}{' '}
-            {n.phone ? `| Ph: ${n.phone}` : ''} {n.email ? `| Email: ${n.email}` : ''}
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: layout === 'corporate-clean' ? 'flex-start' : 'center',
-              gap: '12px',
-              marginTop: '4px',
-              fontSize: '9.5px',
-            }}
-          >
-            {n.gst && (
-              <span
-                style={{
-                  fontWeight: '700',
-                  color: layout === 'dualtone-docket' ? '#fed7aa' : primary,
-                }}
-              >
-                GSTIN: {n.gst}
-              </span>
-            )}
-            {n.website && (
-              <span style={{ color: layout === 'dualtone-docket' ? '#cbd5e1' : '#6b7280' }}>
-                Web: {n.website}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Right Info Box: LR No, Dates, Barcode */}
-        <div
-          style={{
-            width: '210px',
-            padding: '8px 12px',
-            flexShrink: 0,
-            background: layout === 'dualtone-docket' ? '#0f172a' : secondary,
-            color: layout === 'dualtone-docket' ? '#f8fafc' : '#000000',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            gap: '3px',
-            fontSize: '10px',
-          }}
-        >
-          <div
-            style={{
-              fontSize: '12px',
-              fontWeight: '900',
-              color: layout === 'dualtone-docket' ? '#60a5fa' : primary,
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              borderBottom: `1px solid ${layout === 'dualtone-docket' ? '#334155' : '#cbd5e1'}`,
-              paddingBottom: '2px',
-              marginBottom: '2px',
-            }}
-          >
-            {config.title || 'LORRY RECEIPT'}
-          </div>
-
-          <div>
-            <span style={{ color: layout === 'dualtone-docket' ? '#94a3b8' : '#64748b' }}>
-              LR / Bilty No:
-            </span>{' '}
-            <strong
-              style={{
-                fontSize: '12px',
-                color: layout === 'dualtone-docket' ? '#f87171' : '#dc2626',
-              }}
-            >
-              {s(n.lrNo) || 'PENDING'}
-            </strong>
-          </div>
-
-          {n.billNo && (
-            <div>
-              <span style={{ color: layout === 'dualtone-docket' ? '#94a3b8' : '#64748b' }}>
-                Bill No:
-              </span>{' '}
-              <strong>{n.billNo}</strong>
-            </div>
-          )}
-
-          <div>
-            <span style={{ color: layout === 'dualtone-docket' ? '#94a3b8' : '#64748b' }}>
-              Booking Date:
-            </span>{' '}
-            <strong>{formatDate(n.bookingDate) || '—'}</strong>
-          </div>
-
-          {n.deliveryDate && (
-            <div>
-              <span style={{ color: layout === 'dualtone-docket' ? '#94a3b8' : '#64748b' }}>
-                Delivery Exp:
-              </span>{' '}
-              <strong>{formatDate(n.deliveryDate)}</strong>
-            </div>
-          )}
-
-          {/* Express barcode preview simulation if express courier */}
-          {layout === 'express-courier' && (
-            <div
-              style={{
-                marginTop: '4px',
-                paddingTop: '3px',
-                borderTop: '1px solid #cbd5e1',
-                textAlign: 'center',
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: 'monospace',
-                  fontSize: '13px',
-                  letterSpacing: '2px',
-                  fontWeight: 'bold',
-                }}
-              >
-                ║▌║▌║█│▌▌│█║▌
-              </div>
-              <div style={{ fontSize: '8px', color: '#64748b' }}>EXP-TRACK-{s(n.lrNo) || '001'}</div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ROUTE BANNER (FROM -> TO) */}
-      <div
-        style={{
-          borderBottom: border,
-          background: layout === 'dualtone-docket' ? '#f1f5f9' : '#ffffff',
-          padding: '6px 12px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          fontSize: '11px',
-          fontWeight: '700',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ color: '#64748b', textTransform: 'uppercase', fontSize: '10px' }}>
-            From:
-          </span>
-          <span
-            style={{
-              fontSize: '13px',
-              fontWeight: '900',
-              color: primary,
-              textTransform: 'uppercase',
-            }}
-          >
-            {s(r.city) || s(n.city) || 'ORIGIN STATION'}
-          </span>
-          <span style={{ color: '#94a3b8', fontSize: '15px' }}>➔</span>
-          <span style={{ color: '#64748b', textTransform: 'uppercase', fontSize: '10px' }}>
-            To:
-          </span>
-          <span
-            style={{
-              fontSize: '13px',
-              fontWeight: '900',
-              color: '#dc2626',
-              textTransform: 'uppercase',
-            }}
-          >
-            {s(i.city) || 'DESTINATION STATION'}
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '10px' }}>
-          <div>
-            <span style={{ color: '#64748b' }}>Booking Time:</span>{' '}
-            <strong>{s(n.bookingTime) || '—'}</strong>
-          </div>
-          <div>
-            <span style={{ color: '#64748b' }}>Payment Mode:</span>{' '}
-            <strong
-              style={{
-                color: primary,
-                border: `1px solid ${primary}`,
-                padding: '1px 6px',
-                borderRadius: '2px',
-              }}
-            >
-              TO PAY / BILLED
-            </strong>
-          </div>
-        </div>
-      </div>
-
-      {/* CONSIGNOR & CONSIGNEE SECTION */}
-      <div
-        style={{
-          borderBottom: border,
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-        }}
-      >
-        {/* Consignor Box */}
-        <div
-          style={{
-            borderRight: border,
-            padding: '8px 12px',
-            background: bg,
-          }}
-        >
-          <div
-            style={{
-              fontSize: '10px',
-              fontWeight: '800',
-              color: primary,
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              marginBottom: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <span>CONSIGNOR (CONSIGNED FROM):</span>
-            <span style={{ fontSize: '8.5px', color: '#64748b' }}>DISPATCH PARTY</span>
-          </div>
-
-          <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', marginBottom: '2px' }}>
-            {s(r.name) || 'M/s. ___________________________'}
-          </div>
-
-          <div style={{ fontSize: '10px', color: '#334155', minHeight: '26px', lineHeight: '1.3' }}>
-            {s(r.address) || 'Address not provided'}
-            {r.city ? `, ${r.city}` : ''} {r.state ? `(${r.state})` : ''} {r.pincode ? `- ${r.pincode}` : ''}
-          </div>
-
-          <div
-            style={{
-              marginTop: '4px',
-              fontSize: '10px',
-              display: 'flex',
-              justifyContent: 'space-between',
-            }}
-          >
-            <span>
-              <strong>GSTIN:</strong>{' '}
-              <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{s(r.gst) || '—'}</span>
-            </span>
-            <span>
-              <strong>Mob:</strong> {s(r.mobile) || '—'}
-            </span>
-          </div>
-        </div>
-
-        {/* Consignee Box */}
-        <div
-          style={{
-            padding: '8px 12px',
-            background: bg,
-          }}
-        >
-          <div
-            style={{
-              fontSize: '10px',
-              fontWeight: '800',
-              color: primary,
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              marginBottom: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <span>CONSIGNEE (DELIVER TO):</span>
-            <span style={{ fontSize: '8.5px', color: '#64748b' }}>RECEIVING PARTY</span>
-          </div>
-
-          <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', marginBottom: '2px' }}>
-            {s(i.name) || 'M/s. ___________________________'}
-          </div>
-
-          <div style={{ fontSize: '10px', color: '#334155', minHeight: '26px', lineHeight: '1.3' }}>
-            {s(i.address) || 'Address not provided'}
-            {i.city ? `, ${i.city}` : ''} {i.state ? `(${i.state})` : ''} {i.pincode ? `- ${i.pincode}` : ''}
-          </div>
-
-          <div
-            style={{
-              marginTop: '4px',
-              fontSize: '10px',
-              display: 'flex',
-              justifyContent: 'space-between',
-            }}
-          >
-            <span>
-              <strong>GSTIN:</strong>{' '}
-              <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{s(i.gst) || '—'}</span>
-            </span>
-            <span>
-              <strong>Mob:</strong> {s(i.mobile) || '—'}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* VEHICLE & DRIVER DETAILS BAR */}
-      <div
-        style={{
-          borderBottom: border,
-          background: secondary,
-          padding: '6px 12px',
-          display: 'grid',
-          gridTemplateColumns: '1.2fr 1fr 1fr 1fr',
-          gap: '8px',
-          fontSize: '10px',
-        }}
-      >
-        <div>
-          <span style={{ color: '#64748b' }}>Vehicle / Lorry No:</span>
-          <div
-            style={{
-              fontSize: '12px',
-              fontWeight: '900',
-              color: primary,
-              fontFamily: 'monospace',
-            }}
-          >
-            {s(a.number) || '________________'}
-          </div>
-        </div>
-
-        <div>
-          <span style={{ color: '#64748b' }}>Driver Name:</span>
-          <div style={{ fontWeight: '700' }}>{s(a.driverName) || '________________'}</div>
-        </div>
-
-        <div>
-          <span style={{ color: '#64748b' }}>Driver Mobile:</span>
-          <div style={{ fontWeight: '700' }}>{s(a.driverMobile) || '________________'}</div>
-        </div>
-
-        <div>
-          <span style={{ color: '#64748b' }}>Driving License No:</span>
-          <div style={{ fontWeight: '700' }}>{s(a.driverLicense) || '________________'}</div>
-        </div>
-      </div>
-
-      {/* GOODS DESCRIPTION TABLE */}
-      <div style={{ flex: '1 1 0px', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <table
-          style={{
-            width: '100%',
-            height: '100%',
-            borderCollapse: 'collapse',
-            fontSize: '10px',
-            textAlign: 'left',
-          }}
-        >
-          <thead>
-            <tr
-              style={{
-                background: layout === 'dualtone-docket' ? primary : '#f1f5f9',
-                color: layout === 'dualtone-docket' ? '#ffffff' : '#0f172a',
-                borderBottom: border,
-                fontWeight: '800',
-                textTransform: 'uppercase',
-                letterSpacing: '0.4px',
-              }}
-            >
-              <th style={{ padding: '6px 8px', borderRight: border, width: '40px', textAlign: 'center' }}>
-                Sr.
-              </th>
-              <th style={{ padding: '6px 8px', borderRight: border, width: '80px', textAlign: 'center' }}>
-                Pkgs
-              </th>
-              <th style={{ padding: '6px 8px', borderRight: border }}>Description of Goods / Articles</th>
-              <th style={{ padding: '6px 8px', borderRight: border, width: '85px', textAlign: 'right' }}>
-                Weight
-              </th>
-              <th style={{ padding: '6px 8px', borderRight: border, width: '70px', textAlign: 'right' }}>
-                Rate (Rs)
-              </th>
-              <th style={{ padding: '6px 8px', borderRight: border, width: '85px', textAlign: 'right' }}>
-                Freight (Rs)
-              </th>
-              <th style={{ padding: '6px 8px', width: '95px', textAlign: 'right' }}>Total (Rs)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {o && o.length > 0 ? (
-              o.map((item, idx) => {
-                const rowFreight = Number(item.freight) || 0;
-                const rowLoading = Number(item.loading) || 0;
-                const rowUnloading = Number(item.unloading) || 0;
-                const rowInsurance = Number(item.insurance) || 0;
-                const rowOther = Number(item.otherCharges) || 0;
-                const rowSub = rowFreight + rowLoading + rowUnloading + rowInsurance + rowOther;
-
-                return (
-                  <tr
-                    key={item.id || idx}
-                    style={{
-                      height: '30px',
-                      borderBottom: `1px solid ${theme.border ? '#e2e8f0' : '#cbd5e1'}`,
-                      background: idx % 2 === 1 && layout === 'modern-card' ? '#f8fafc' : 'transparent',
-                    }}
-                  >
-                    <td style={{ padding: '6px 8px', borderRight: border, textAlign: 'center' }}>
-                      {idx + 1}
-                    </td>
-                    <td style={{ padding: '6px 8px', borderRight: border, textAlign: 'center' }}>
-                      {item.packages || item.quantity || '—'}
-                    </td>
-                    <td style={{ padding: '6px 8px', borderRight: border }}>
-                      <div style={{ fontWeight: '700', color: '#0f172a' }}>
-                        {item.itemName || 'Commercial Goods Consignment'}
-                      </div>
-                      {item.description && (
-                        <div style={{ fontSize: '9px', color: '#64748b' }}>{item.description}</div>
-                      )}
-                      {item.remarks && (
-                        <div style={{ fontSize: '8.5px', color: '#dc2626', fontStyle: 'italic' }}>
-                          Remarks: {item.remarks}
-                        </div>
-                      )}
-                    </td>
-                    <td style={{ padding: '6px 8px', borderRight: border, textAlign: 'right' }}>
-                      {item.weight ? `${item.weight} ${item.unit || 'Kg'}` : '—'}
-                    </td>
-                    <td style={{ padding: '6px 8px', borderRight: border, textAlign: 'right' }}>
-                      {item.rate ? Number(item.rate).toFixed(2) : '—'}
-                    </td>
-                    <td style={{ padding: '6px 8px', borderRight: border, textAlign: 'right' }}>
-                      {rowFreight ? rowFreight.toFixed(2) : '0.00'}
-                    </td>
-                    <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: '700' }}>
-                      {rowSub ? rowSub.toFixed(2) : '0.00'}
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr style={{ height: '30px', borderBottom: border }}>
-                <td style={{ padding: '6px 8px', borderRight: border, textAlign: 'center' }}>1</td>
-                <td style={{ padding: '6px 8px', borderRight: border, textAlign: 'center' }}>—</td>
-                <td style={{ padding: '6px 8px', borderRight: border }}>Commercial Freight Transport</td>
-                <td style={{ padding: '6px 8px', borderRight: border, textAlign: 'right' }}>—</td>
-                <td style={{ padding: '6px 8px', borderRight: border, textAlign: 'right' }}>—</td>
-                <td style={{ padding: '6px 8px', borderRight: border, textAlign: 'right' }}>0.00</td>
-                <td style={{ padding: '6px 8px', textAlign: 'right' }}>0.00</td>
-              </tr>
-            )}
-
-            {/* Fill empty ruled grid rows so the table fills the middle of the bill professionally */}
-            {Array.from({ length: Math.max(0, 10 - (o && o.length > 0 ? o.length : 1)) }).map((_, rIdx) => {
-              const rowNum = (o && o.length > 0 ? o.length : 1) + rIdx + 1;
-              return (
-                <tr
-                  key={`empty-${rIdx}`}
-                  style={{
-                    height: '22px',
-                    borderBottom: `1px solid ${theme.border ? '#e2e8f0' : '#cbd5e1'}`,
-                  }}
-                >
-                  <td style={{ padding: '2px 8px', borderRight: border, textAlign: 'center', color: '#94a3b8' }}>
-                    {rowNum}
-                  </td>
-                  <td style={{ padding: '2px 8px', borderRight: border, textAlign: 'center', color: '#cbd5e1' }}>—</td>
-                  <td style={{ padding: '2px 8px', borderRight: border }}>&nbsp;</td>
-                  <td style={{ padding: '2px 8px', borderRight: border, textAlign: 'right', color: '#cbd5e1' }}>—</td>
-                  <td style={{ padding: '2px 8px', borderRight: border, textAlign: 'right', color: '#cbd5e1' }}>—</td>
-                  <td style={{ padding: '2px 8px', borderRight: border, textAlign: 'right', color: '#cbd5e1' }}>—</td>
-                  <td style={{ padding: '2px 8px', textAlign: 'right', color: '#cbd5e1' }}>—</td>
-                </tr>
-              );
-            })}
-          </tbody>
-          <tfoot>
-            <tr
-              style={{
-                borderTop: border,
-                borderBottom: border,
-                background: secondary,
-                fontWeight: '800',
-              }}
-            >
-              <td style={{ padding: '5px 8px', borderRight: border, textAlign: 'center' }}>TOT</td>
-              <td style={{ padding: '5px 8px', borderRight: border, textAlign: 'center' }}>
-                {totalPackages > 0 ? totalPackages : '—'}
-              </td>
-              <td style={{ padding: '5px 8px', borderRight: border, textTransform: 'uppercase' }}>
-                Total Consignment Manifest Summary
-              </td>
-              <td style={{ padding: '5px 8px', borderRight: border, textAlign: 'right' }}>
-                {totalWeight > 0 ? `${totalWeight} ${totalWeightUnit}` : '—'}
-              </td>
-              <td style={{ padding: '5px 8px', borderRight: border, textAlign: 'right' }}>—</td>
-              <td style={{ padding: '5px 8px', borderRight: border, textAlign: 'right' }}>
-                {(totals.freight || 0).toFixed(2)}
-              </td>
-              <td style={{ padding: '5px 8px', textAlign: 'right', color: primary }}>
-                {(totals.subtotal || 0).toFixed(2)}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-
-      {/* FINANCIAL BREAKDOWN & CHARGES SECTION */}
-      <div
-        style={{
-          borderBottom: border,
-          display: 'grid',
-          gridTemplateColumns: '1.4fr 1fr',
-          background: bg,
-        }}
-      >
-        {/* Left Side: Amount in Words, Special Notice & Terms */}
-        <div
-          style={{
-            borderRight: border,
-            padding: '8px 12px 10px 12px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div>
-            <div style={{ fontSize: '10px', color: '#475569', marginBottom: '3px' }}>
-              <strong>Amount in Words:</strong>
-            </div>
-            <div
-              style={{
-                fontSize: '11px',
-                fontWeight: '800',
-                color: primary,
-                textTransform: 'capitalize',
-                background: secondary,
-                padding: '5px 10px',
-                borderRadius: '3px',
-                border: '1px solid #e2e8f0',
-                marginBottom: '8px',
-              }}
-            >
-              {amountInWords}
-            </div>
-
-            {/* GST Notification / RCM Notice */}
-            <div
-              style={{
-                fontSize: '9px',
-                color: '#475569',
-                borderLeft: `3px solid ${primary}`,
-                paddingLeft: '8px',
-                marginBottom: '8px',
-                lineHeight: '1.4',
-              }}
-            >
-              <strong>GST Status:</strong> Person liable to pay GST is Consignor / Consignee under
-              Reverse Charge Mechanism (RCM) as per Notification No. 13/2017-Central Tax (Rate).
-            </div>
-
-            {/* Specific Template Terms */}
-            <div style={{ fontSize: '8.5px', color: '#64748b', lineHeight: '1.35', marginBottom: '8px' }}>
-              <strong>Notice:</strong> {config.terms || 'Goods are accepted for carriage at owner\'s risk. Transporter is not responsible for en-route delays due to natural events, road accidents or police/RTO checking. Demurrage chargeable after 48 hours of vehicle arrival.'}
-            </div>
-          </div>
-
-          <div
-            style={{
-              paddingTop: '6px',
-              fontSize: '8.5px',
-              color: '#64748b',
-              fontStyle: 'italic',
-              lineHeight: '1.3',
-            }}
-          >
-            * This consignment note is issued subject to the provisions of the Carriage by Road Act, 2007.
-          </div>
-        </div>
-
-        {/* Right Side: Tabular Charges Calculation */}
-        <div style={{ padding: '0', background: secondary }}>
-          <table
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              fontSize: '10px',
-            }}
-          >
-            <tbody>
-              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <td style={{ padding: '3px 8px', color: '#475569' }}>Basic Freight:</td>
-                <td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: '700' }}>
-                  {(totals.freight || 0).toFixed(2)}
-                </td>
-              </tr>
-              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <td style={{ padding: '3px 8px', color: '#475569' }}>Loading / Hamali:</td>
-                <td style={{ padding: '3px 8px', textAlign: 'right' }}>
-                  {(totals.loading || 0).toFixed(2)}
-                </td>
-              </tr>
-              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <td style={{ padding: '3px 8px', color: '#475569' }}>Unloading Charges:</td>
-                <td style={{ padding: '3px 8px', textAlign: 'right' }}>
-                  {(totals.unloading || 0).toFixed(2)}
-                </td>
-              </tr>
-              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <td style={{ padding: '3px 8px', color: '#475569' }}>Insurance / FOV:</td>
-                <td style={{ padding: '3px 8px', textAlign: 'right' }}>
-                  {(totals.insurance || 0).toFixed(2)}
-                </td>
-              </tr>
-              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <td style={{ padding: '3px 8px', color: '#475569' }}>Statistical / Other Charges:</td>
-                <td style={{ padding: '3px 8px', textAlign: 'right' }}>
-                  {(totals.otherCharges || 0).toFixed(2)}
-                </td>
-              </tr>
-              <tr style={{ borderBottom: '1px solid #cbd5e1', fontWeight: '700', background: '#f8fafc' }}>
-                <td style={{ padding: '4px 8px', color: '#1e293b' }}>Subtotal:</td>
-                <td style={{ padding: '4px 8px', textAlign: 'right' }}>
-                  {(totals.subtotal || 0).toFixed(2)}
-                </td>
-              </tr>
-              {totals.gstAmount > 0 && (
-                <>
-                  {isInterState ? (
-                    <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#475569' }}>
-                      <td style={{ padding: '3px 8px' }}>IGST:</td>
-                      <td style={{ padding: '3px 8px', textAlign: 'right' }}>
-                        {(totals.gstAmount || 0).toFixed(2)}
-                      </td>
-                    </tr>
-                  ) : (
-                    <>
-                      <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#475569' }}>
-                        <td style={{ padding: '3px 8px' }}>CGST:</td>
-                        <td style={{ padding: '3px 8px', textAlign: 'right' }}>
-                          {halfGst.toFixed(2)}
-                        </td>
-                      </tr>
-                      <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#475569' }}>
-                        <td style={{ padding: '3px 8px' }}>SGST / UTGST:</td>
-                        <td style={{ padding: '3px 8px', textAlign: 'right' }}>
-                          {halfGst.toFixed(2)}
-                        </td>
-                      </tr>
-                    </>
-                  )}
-                </>
-              )}
-              <tr
-                style={{
-                  background: layout === 'dualtone-docket' ? primary : '#f1f5f9',
-                  color: layout === 'dualtone-docket' ? '#ffffff' : primary,
-                  borderTop: border,
-                  fontSize: '11px',
-                  fontWeight: '900',
-                }}
-              >
-                <td style={{ padding: '6px 8px', textTransform: 'uppercase' }}>GRAND TOTAL:</td>
-                <td style={{ padding: '6px 8px', textAlign: 'right', fontSize: '13px' }}>
-                  ₹{grandTotalRounded.toFixed(2)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* SIGNATURES SECTION */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr 1.3fr',
-          minHeight: '62px',
-          background: bg,
-          fontSize: '9px',
-          fontWeight: '600',
-          textAlign: 'center',
-        }}
-      >
-        <div
-          style={{
-            borderRight: border,
-            padding: '6px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div style={{ color: '#64748b' }}>Booking Date & Time</div>
-          <div style={{ borderTop: '1px dashed #94a3b8', paddingTop: '3px' }}>
-            Consignor's Signature
-          </div>
-        </div>
-
-        <div
-          style={{
-            borderRight: border,
-            padding: '6px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div style={{ color: '#64748b' }}>Vehicle Inspected</div>
-          <div style={{ borderTop: '1px dashed #94a3b8', paddingTop: '3px' }}>
-            Driver's Signature
-          </div>
-        </div>
-
-        <div
-          style={{
-            borderRight: border,
-            padding: '6px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div style={{ color: '#64748b' }}>Received in Good Condition</div>
-          <div style={{ borderTop: '1px dashed #94a3b8', paddingTop: '3px' }}>
-            Consignee Stamp & Sign
-          </div>
-        </div>
-
-        <div
-          style={{
-            padding: '6px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            background: secondary,
-          }}
-        >
-          <div style={{ color: primary, fontWeight: '700' }}>
-            For {s(n.companyName) || 'Transport Company'}
-          </div>
-          <div style={{ borderTop: '1px dashed #94a3b8', paddingTop: '3px', color: '#0f172a' }}>
-            Authorised Signatory
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  const design = getBillDesign(config);
+  const pageRef = useRef(null);
+  const contentRef = useRef(null);
+  // Measure natural document height, before the preview's external zoom. Long
+  // addresses and additional rows must shrink the complete sheet, never crop it.
+  useEffect(() => {
+    const page = pageRef.current, content = contentRef.current;
+    if (!page || !content) return;
+    let disposed = false;
+    const fit = () => {
+      if (disposed) return;
+      const style = getComputedStyle(page);
+      const available = page.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+      content.style.transform = 'none';
+      content.style.height = `${available}px`;
+      const scale = Math.min(1, available / Math.max(1, content.scrollHeight));
+      content.style.transform = `scale(${scale})`;
+      page.dataset.fitScale = String(scale);
+    };
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(page);
+    content.addEventListener('load', fit, true);
+    document.fonts?.ready.then(fit);
+    return () => { disposed = true; observer.disconnect(); content.removeEventListener('load', fit, true); };
+  }, [data, totals, design.key]);
+  const sections = {
+    route: <Route data={data} variant={design.route} />, parties: <Parties data={data} variant={design.party} />, vehicle: <Vehicle data={data} variant={design.vehicle} />,
+    goods: <Goods data={data} variant={design.goods} />, summary: <Summary data={data} totals={totals} variant={design.summary} />, notes: <Notes data={data} totals={totals} />, signatures: <Signatures data={data} page={design.page} />,
+  };
+  const region = (node, index) => typeof node === 'string' ? <React.Fragment key={`${node}-${index}`}>{sections[node]}</React.Fragment>
+    : <div key={index} className={`bd-region bd-region-${node.type}`}>{node.children.map(region)}</div>;
+  return <div ref={pageRef} id="bill-a4-preview" className={`bill-document bd-page-${design.page}${data.goods?.length > 10 ? ' bd-dense' : ''}`} data-design={design.key}
+    style={{ '--bd-ink': config.theme?.primary || '#17243b', '--bd-wash': config.theme?.secondary || '#f1f5f9' }}>
+    {data.settings?.watermark && <div className="bd-watermark">{data.settings.watermark}</div>}
+    <div ref={contentRef} className="bd-sheet-content"><BrandHeader data={data} variant={design.header} title={design.title} /><div className="bd-page-body">{design.regions.map(region)}</div></div>
+  </div>;
 }

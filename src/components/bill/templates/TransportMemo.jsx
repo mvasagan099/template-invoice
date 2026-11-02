@@ -12,7 +12,7 @@ export function TransportMemo({ data: e, totals: t }) {
       vehicle: a,
       goods: o,
     } = e,
-    s = (e) => e || ``,
+    s = (e) => e ?? ``,
     c = (e, t = `120px`) =>
       (0, y.jsx)(`span`, {
         style: {
@@ -83,7 +83,7 @@ export function TransportMemo({ data: e, totals: t }) {
                   textTransform: `uppercase`,
                   lineHeight: `1`,
                 },
-                children: s(n.companyName) || `TRANSPORT COMPANY`,
+                children: s(n.companyName),
               }),
               (0, y.jsxs)(`div`, {
                 style: {
@@ -156,7 +156,7 @@ export function TransportMemo({ data: e, totals: t }) {
                   color: `#1e293b`,
                   lineHeight: `1`,
                 },
-                children: s(n.lrNo) || `________`,
+                children: s(n.lrNo),
               }),
             ],
           }),
@@ -556,7 +556,7 @@ export function TransportMemo({ data: e, totals: t }) {
                 style: { marginTop: `4px` },
                 children: [
                   `Goods carried at owner's risk. Claims within 24 hrs of delivery. Subject to `,
-                  s(n.city) || `________`,
+                  s(n.city),
                   ` jurisdiction. E&OE.`,
                 ],
               }),
@@ -687,7 +687,7 @@ export function TransportMemo({ data: e, totals: t }) {
             children: [
               `Consignor`,
               `Driver`,
-              `For ${s(n.companyName) || `Company`}`,
+              `For ${s(n.companyName)}`,
             ].map((e) =>
               (0, y.jsxs)(
                 `div`,

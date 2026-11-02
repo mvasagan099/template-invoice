@@ -1,6 +1,7 @@
 import React from "react";
 import { jsx, jsxs, Fragment } from "react/jsx-runtime";
 import { BILL_PRESETS } from "../../constants/billPresets.js";
+import { BillExtraFields } from './BillExtraFields.jsx';
 
 const y = { jsx, jsxs, Fragment };
 
@@ -381,6 +382,7 @@ export function BillForms({
           }),
         ],
       }),
+      <BillExtraFields key="booking-instructions" data={e} updateSection={n} />,
       (0, y.jsxs)(`div`, {
         className: `bill-grid`,
         children: [

@@ -55,7 +55,7 @@ A complete, production-grade recreation of [invoice.lordsandkingsagro.com](https
 ---
 
 ### 4. 🚚 Transport Bill Studio (`/bill`)
-- **11 Specialized Indian Logistics Templates**:
+- **1,061 Transport Bill Templates**: 11 original layouts plus 1,050 composed designs. Original layouts include:
   1. Lorry Receipt (LR)
   2. Consignment Note
   3. Goods Receipt
@@ -105,7 +105,7 @@ A complete, production-grade recreation of [invoice.lordsandkingsagro.com](https
 ├── src/
 │   ├── constants/
 │   │   ├── templates.js      # 50 full invoice visual templates
-│   │   └── billPresets.js    # 11 bill templates, presets & default bill state
+│   │   └── billPresets.js    # Bill template catalog, presets & blank default state
 │   ├── utils/
 │   │   ├── currency.js       # Indian numbering number-to-words, rounding, GST math
 │   │   ├── generators.js     # Sequential, random, alternating number generators
@@ -116,7 +116,7 @@ A complete, production-grade recreation of [invoice.lordsandkingsagro.com](https
 │   │   ├── invoice/          # InvoiceForm, A4InvoiceSheet, TemplateGrid
 │   │   ├── bulk/             # BulkSequential, BulkRandom
 │   │   ├── bill/             # BillStudio, BillToolbar, BillForms, BillA4Preview
-│   │   │   └── templates/    # 11 distinct transport bill template layouts
+│   │   │   └── templates/    # 1,061 transport bill templates with distinct structural compositions
 │   │   ├── calculator/       # Calculator iframe component
 │   │   └── layout/           # AppNav, AppShell
 │   ├── styles/
@@ -133,7 +133,7 @@ A complete, production-grade recreation of [invoice.lordsandkingsagro.com](https
 ## 🏃 Getting Started
 
 ### Prerequisites
-- Node.js (v18 or newer)
+- Node.js 20.19+ or 22.12+
 - npm
 
 ### Installation
@@ -152,3 +152,20 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 npm run build
 npm run preview
 ```
+
+
+### Bill template catalog
+
+The Bill Studio includes 1,061 templates: 11 original layouts and 1,050 composed
+layouts. The composed catalog combines 15 page compositions, 10 masthead
+arrangements, and 7 goods formats. Templates 762–1061 add the Quantity Ledger
+and Charge Slips formats; existing template names and IDs remain stable.
+
+Search by template name or design (for example, `quantity ledger`, `charge slips`,
+or `sidebar`), and use the arrow buttons to compare matching designs. Blank
+fields stay blank in previews and exports. Booking time, payment mode and
+instructions are optional inputs.
+
+Run `npm run test:bills` to check all templates for blank/partial/filled/cleared
+data, preservation of entered fields, decimal totals, GST, and unique DOM
+structures after removing all text, colours and attributes.

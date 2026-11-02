@@ -40,7 +40,7 @@ export function FreightBill({ data: e, totals: t }) {
               letterSpacing: `2px`,
               textTransform: `uppercase`,
             },
-            children: n.companyName || `TRANSPORT COMPANY`,
+            children: n.companyName,
           }),
           (0, y.jsxs)(`div`, {
             style: { fontSize: `11px`, marginBottom: `4px` },
@@ -93,7 +93,7 @@ export function FreightBill({ data: e, totals: t }) {
                 children: `LR No.:`,
               }),
               ` `,
-              n.lrNo || `___________`,
+              n.lrNo,
             ],
           }),
           (0, y.jsxs)(`div`, {
@@ -103,7 +103,7 @@ export function FreightBill({ data: e, totals: t }) {
                 children: `Bill No.:`,
               }),
               ` `,
-              n.billNo || `___________`,
+              n.billNo,
             ],
           }),
           (0, y.jsxs)(`div`, {
@@ -113,7 +113,7 @@ export function FreightBill({ data: e, totals: t }) {
                 children: `Date:`,
               }),
               ` `,
-              n.bookingDate || `___________`,
+              n.bookingDate,
             ],
           }),
           (0, y.jsxs)(`div`, {
@@ -123,7 +123,7 @@ export function FreightBill({ data: e, totals: t }) {
                 children: `Delivery Date:`,
               }),
               ` `,
-              n.deliveryDate || `___________`,
+              n.deliveryDate,
             ],
           }),
         ],
@@ -158,10 +158,10 @@ export function FreightBill({ data: e, totals: t }) {
                     }),
                     (0, y.jsx)(`div`, {
                       style: { fontWeight: `700`, fontSize: `12px` },
-                      children: r.name || `________________________`,
+                      children: r.name,
                     }),
                     (0, y.jsx)(`div`, {
-                      children: r.address || `________________________`,
+                      children: r.address,
                     }),
                     (0, y.jsxs)(`div`, {
                       children: [
@@ -174,14 +174,14 @@ export function FreightBill({ data: e, totals: t }) {
                     (0, y.jsxs)(`div`, {
                       children: [
                         `Ph: `,
-                        r.mobile || `________________________`,
+                        r.mobile,
                       ],
                     }),
                     (0, y.jsxs)(`div`, {
                       style: { marginTop: `4px` },
                       children: [
                         `GSTIN: `,
-                        r.gst || `________________________`,
+                        r.gst,
                       ],
                     }),
                   ],
@@ -205,10 +205,10 @@ export function FreightBill({ data: e, totals: t }) {
                     }),
                     (0, y.jsx)(`div`, {
                       style: { fontWeight: `700`, fontSize: `12px` },
-                      children: i.name || `________________________`,
+                      children: i.name,
                     }),
                     (0, y.jsx)(`div`, {
-                      children: i.address || `________________________`,
+                      children: i.address,
                     }),
                     (0, y.jsxs)(`div`, {
                       children: [
@@ -221,14 +221,14 @@ export function FreightBill({ data: e, totals: t }) {
                     (0, y.jsxs)(`div`, {
                       children: [
                         `Ph: `,
-                        i.mobile || `________________________`,
+                        i.mobile,
                       ],
                     }),
                     (0, y.jsxs)(`div`, {
                       style: { marginTop: `4px` },
                       children: [
                         `GSTIN: `,
-                        i.gst || `________________________`,
+                        i.gst,
                       ],
                     }),
                   ],
@@ -242,19 +242,19 @@ export function FreightBill({ data: e, totals: t }) {
                 children: [
                   (0, y.jsx)(`strong`, { children: `Vehicle No.:` }),
                   ` `,
-                  a.number || `_____________`,
+                  a.number,
                   `  \xA0\xA0`,
                   (0, y.jsx)(`strong`, { children: `Driver:` }),
                   ` `,
-                  a.driverName || `_____________`,
+                  a.driverName,
                   `  \xA0\xA0`,
                   (0, y.jsx)(`strong`, { children: `Driver Lic.:` }),
                   ` `,
-                  a.driverLicense || `_____________`,
+                  a.driverLicense,
                   `  \xA0\xA0`,
                   (0, y.jsx)(`strong`, { children: `Driver Ph.:` }),
                   ` `,
-                  a.driverMobile || `_____________`,
+                  a.driverMobile,
                 ],
               }),
             }),
@@ -700,7 +700,7 @@ export function FreightBill({ data: e, totals: t }) {
           { label: `Booking Clerk`, sub: `` },
           { label: `Driver`, sub: `${a.driverName || ``}` },
           {
-            label: `For ${n.companyName || `Company`}`,
+            label: `For ${n.companyName}`,
             sub: `Authorised Signatory`,
           },
         ].map(({ label: e, sub: t }) =>

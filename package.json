@@ -4,6 +4,7 @@
   "description": "Lords & Kings — Invoice & Document Generator",
   "type": "module",
   "scripts": {
+    "test:bills": "node scripts/test-bills.mjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"

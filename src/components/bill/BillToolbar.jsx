@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BILL_TEMPLATES } from '../../constants/billPresets.js';
+import { BillTemplatePicker } from './BillTemplatePicker.jsx';
 import { exportBillToPng, exportBillToPdf } from '../../utils/pdfExport.js';
 
 export function BillToolbar({ resetData, settings, updateSection }) {
@@ -73,30 +73,8 @@ export function BillToolbar({ resetData, settings, updateSection }) {
           </button>
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <label
-          style={{
-            fontSize: '11px',
-            fontWeight: '600',
-            color: '#6b7280',
-            whiteSpace: 'nowrap',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-          }}
-        >
-          Template ({BILL_TEMPLATES.indexOf(settings.template) !== -1 ? `#${BILL_TEMPLATES.indexOf(settings.template) + 1}` : '#1'} of {BILL_TEMPLATES.length}):
-        </label>
-        <select
-          className="bill-template-select"
-          value={settings.template}
-          onChange={(e) => updateSection('settings', 'template', e.target.value)}
-        >
-          {BILL_TEMPLATES.map((tmpl, index) => (
-            <option key={tmpl} value={tmpl}>
-              {index + 1}. {tmpl}
-            </option>
-          ))}
-        </select>
+      <BillTemplatePicker value={settings.template} onChange={(value) => updateSection('settings', 'template', value)} />
+      <div style={{ marginTop: '8px' }}>
         <input
           className="bill-input"
           style={{ flex: 1 }}

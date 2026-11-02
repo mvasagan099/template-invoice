@@ -79,9 +79,11 @@ export function useBillData() {
       const newGoods = [...prev.goods];
       const updated = { ...newGoods[index], [field]: value };
       if (field === 'quantity' || field === 'rate') {
-        const q = Number(field === 'quantity' ? value : updated.quantity) || 0;
-        const r = Number(field === 'rate' ? value : updated.rate) || 0;
-        updated.freight = q * r;
+        const hasQuantity = String(updated.quantity ?? '').trim() !== '';
+        const hasRate = String(updated.rate ?? '').trim() !== '';
+        updated.freight = hasQuantity && hasRate
+          ? Number(updated.quantity) * Number(updated.rate)
+          : '';
       }
       newGoods[index] = updated;
       return { ...prev, goods: newGoods };

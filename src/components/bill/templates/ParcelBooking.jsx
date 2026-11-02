@@ -24,7 +24,7 @@ export function ParcelBooking({ data: e, totals: t }) {
       vehicle: a,
       goods: o,
     } = e,
-    s = (e) => e || ``,
+    s = (e) => e ?? ``,
     c = (e, t = `200px`) =>
       (0, y.jsx)(`span`, {
         style: {
@@ -88,7 +88,7 @@ export function ParcelBooking({ data: e, totals: t }) {
                   fontFamily: `Impact, Arial Black, sans-serif`,
                   lineHeight: `1`,
                 },
-                children: s(n.companyName) || `BABA TRANSPORT COMPANY`,
+                children: s(n.companyName),
               }),
               (0, y.jsx)(`div`, {
                 style: { fontSize: `11px`, marginTop: `3px` },
@@ -171,7 +171,7 @@ export function ParcelBooking({ data: e, totals: t }) {
                   padding: `2px 8px 4px`,
                   lineHeight: `1.1`,
                 },
-                children: s(n.lrNo) || `______`,
+                children: s(n.lrNo),
               }),
               (0, y.jsxs)(`div`, {
                 style: {
@@ -665,7 +665,7 @@ export function ParcelBooking({ data: e, totals: t }) {
               `for `,
               (0, y.jsx)(`span`, {
                 style: { textTransform: `uppercase` },
-                children: s(n.companyName) || `BABA TRANSPORT COMPANY`,
+                children: s(n.companyName),
               }),
             ],
           }),

@@ -85,9 +85,11 @@ export const DEFAULT_BILL_DATA = {
     gst: '',
     lrNo: '',
     billNo: '',
-    bookingDate: new Date().toISOString().split('T')[0],
+    bookingDate: '',
     deliveryDate: '',
     bookingTime: '',
+    paymentMode: '',
+    terms: '',
   },
   consignor: {
     name: '',
