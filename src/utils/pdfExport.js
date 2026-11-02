@@ -207,7 +207,7 @@ export async function exportBillToPdf(element, filename = 'Transport_Bill.pdf') 
   const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
   const renderHeight = (canvas.height * pageWidth) / canvas.width;
 
-  if (renderHeight <= pageHeight + 2) {
+  if (renderHeight <= pageHeight * 1.15) {
     // Single page: fits precisely on A4 full sheet
     pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
   } else {
