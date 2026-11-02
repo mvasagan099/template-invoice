@@ -15,13 +15,15 @@
 
 #bill-a4-preview {
   width: 794px !important;
-  min-height: 1123px !important;
+  height: 1123px !important;
+  max-height: 1123px !important;
   box-sizing: border-box !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
   position: relative !important;
   background: #ffffff;
+  overflow: hidden !important;
 }
 
 #bill-a4-preview * {
@@ -41,6 +43,9 @@
   
   *, *::before, *::after {
     box-sizing: border-box !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
   html, body {
@@ -51,8 +56,6 @@
     height: 297mm !important;
     max-height: 297mm !important;
     overflow: hidden !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
   }
   
   /* Hide all app chrome, headers, navigation, and sidebar controls */
@@ -78,7 +81,7 @@
     visibility: hidden;
   }
   
-  /* Reset outer layout wrappers to 0 margins and full page height */
+  /* Reset outer layout wrappers */
   #root,
   .app-shell,
   .app-main {
@@ -87,13 +90,12 @@
     width: 210mm !important;
     height: 297mm !important;
     max-height: 297mm !important;
-    min-height: 0 !important;
     overflow: hidden !important;
     display: block !important;
     background: #ffffff !important;
   }
 
-  /* Make sure bill studio containers and preview are visible and full size */
+  /* Make sure bill studio containers and preview are visible */
   .bill-studio,
   .bill-studio-left,
   .bill-a4-outer,
@@ -110,7 +112,6 @@
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
-    position: static !important;
     overflow: hidden !important;
     page-break-after: avoid !important;
     break-after: avoid !important;
@@ -129,14 +130,15 @@
     break-after: avoid !important;
   }
   
+  /* Scale bill slightly (0.93) so that all borders, signatures, and margins are 100% visible on any printer with 0 second page */
   .bill-a4-outer {
-    transform: none !important;
-    margin: 0 !important;
+    transform: scale(0.93) !important;
+    transform-origin: top center !important;
+    margin: 8mm auto 0 auto !important;
     padding: 0 !important;
-    width: 210mm !important;
-    height: 297mm !important;
-    max-height: 297mm !important;
-    min-height: 0 !important;
+    width: 794px !important;
+    height: 1123px !important;
+    max-height: 1123px !important;
     box-shadow: none !important;
     border-radius: 0 !important;
     overflow: hidden !important;
@@ -147,11 +149,10 @@
   }
   
   #bill-a4-preview {
-    width: 210mm !important;
-    height: 297mm !important;
-    max-height: 297mm !important;
-    min-height: 0 !important;
-    margin: 0 !important;
+    width: 794px !important;
+    height: 1123px !important;
+    max-height: 1123px !important;
+    margin: 0 auto !important;
     box-sizing: border-box !important;
     box-shadow: none !important;
     position: relative !important;

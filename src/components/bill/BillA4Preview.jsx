@@ -29,18 +29,18 @@ export const BILL_TEMPLATE_COMPONENTS = {
 };
 
 const ORIGINAL_TEMPLATE_ROW_TARGETS = {
-  'Lorry Receipt': 21,
-  'Consignment Note': 19,
-  'Goods Receipt': 22,
-  'Parcel Booking': 21,
-  'Freight Bill': 9,
-  'Bilty (Duplicate)': 17,
-  'Bilty': 17,
-  'Trip Challan': 10,
-  'Modern Transport Bill': 13,
-  'Station Receipt': 23,
-  'Transport Memo': 19,
-  'E-Way Bill': 20,
+  'Lorry Receipt': 20,
+  'Consignment Note': 18,
+  'Goods Receipt': 21,
+  'Parcel Booking': 20,
+  'Freight Bill': 8,
+  'Bilty (Duplicate)': 16,
+  'Bilty': 16,
+  'Trip Challan': 9,
+  'Modern Transport Bill': 12,
+  'Station Receipt': 22,
+  'Transport Memo': 18,
+  'E-Way Bill': 19,
 };
 
 function getPaddedDataForTemplate(data, templateName) {

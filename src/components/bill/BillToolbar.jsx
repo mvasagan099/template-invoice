@@ -33,22 +33,7 @@ export function BillToolbar({ resetData, settings, updateSection }) {
   }
 
   function handlePrint() {
-    const outer = document.querySelector('.bill-a4-outer');
-    const prevTransform = outer ? outer.style.transform : '';
-    const prevMargin = outer ? outer.style.marginBottom : '';
-
-    if (outer) {
-      outer.style.transform = 'none';
-      outer.style.marginBottom = '0px';
-    }
-
-    setTimeout(() => {
-      window.print();
-      if (outer) {
-        outer.style.transform = prevTransform;
-        outer.style.marginBottom = prevMargin;
-      }
-    }, 150);
+    window.print();
   }
 
   return (

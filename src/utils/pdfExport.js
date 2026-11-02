@@ -127,14 +127,17 @@ export async function captureBillCanvas(element) {
   let prevTransform = '';
   let prevOrigin = '';
   let prevMargin = '';
+  let prevShadow = '';
 
   if (outer) {
     prevTransform = outer.style.transform;
     prevOrigin = outer.style.transformOrigin;
     prevMargin = outer.style.marginBottom;
+    prevShadow = outer.style.boxShadow;
     outer.style.transform = 'none';
     outer.style.transformOrigin = 'top left';
     outer.style.marginBottom = '0px';
+    outer.style.boxShadow = 'none';
   }
 
   // Double rAF to let browser complete unscaled layout
@@ -150,7 +153,7 @@ export async function captureBillCanvas(element) {
         skipFonts: true,
         fontEmbedCSS: '',
         width: A4_WIDTH_PX,
-        height: Math.max(element.scrollHeight, A4_HEIGHT_PX),
+        height: A4_HEIGHT_PX,
       });
     } catch (e) {
       console.warn('htmlToImage toCanvas failed, using captureElementToCanvas fallback:', e);
@@ -160,7 +163,7 @@ export async function captureBillCanvas(element) {
         backgroundColor: '#ffffff',
         logging: false,
         width: A4_WIDTH_PX,
-        height: Math.max(element.scrollHeight, A4_HEIGHT_PX),
+        height: A4_HEIGHT_PX,
         onclone: (clonedDoc) => {
           normalizeClonedDocForCanvas(clonedDoc);
         },
@@ -171,67 +174,40 @@ export async function captureBillCanvas(element) {
       outer.style.transform = prevTransform;
       outer.style.transformOrigin = prevOrigin;
       outer.style.marginBottom = prevMargin;
+      outer.style.boxShadow = prevShadow;
     }
   }
 }
 
 /**
  * Direct crystal-clear PNG export for bills
+ * Adds a clean white margin around the captured canvas so borders and signatures are 100% complete and unclipped.
  */
 export async function exportBillToPng(element, filename = 'Transport_Bill.png') {
   if (!element) throw new Error('Preview element not found');
-  const outer = document.querySelector('.bill-a4-outer');
-  let prevTransform = '';
-  let prevOrigin = '';
-  let prevMargin = '';
+  const canvas = await captureBillCanvas(element);
+  console.log('CAPTURED CANVAS DIMS:', canvas.width, 'x', canvas.height);
 
-  if (outer) {
-    prevTransform = outer.style.transform;
-    prevOrigin = outer.style.transformOrigin;
-    prevMargin = outer.style.marginBottom;
-    outer.style.transform = 'none';
-    outer.style.transformOrigin = 'top left';
-    outer.style.marginBottom = '0px';
-  }
+  // Add 16px white padding (at 2.5x scale = 40px) around canvas so borders are completely intact
+  const pad = Math.round(16 * 2.5);
+  const framedCanvas = document.createElement('canvas');
+  framedCanvas.width = canvas.width + pad * 2;
+  framedCanvas.height = canvas.height + pad * 2;
+  const ctx = framedCanvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, framedCanvas.width, framedCanvas.height);
+  ctx.drawImage(canvas, pad, pad);
 
-  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-
-  try {
-    let dataUrl = '';
-    try {
-      if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
-        await document.fonts.ready;
-      }
-      dataUrl = await htmlToImage.toPng(element, {
-        pixelRatio: 2.5,
-        backgroundColor: '#ffffff',
-        cacheBust: false,
-        skipFonts: true,
-        fontEmbedCSS: '',
-        width: A4_WIDTH_PX,
-        height: Math.max(element.scrollHeight, A4_HEIGHT_PX),
-      });
-    } catch (err) {
-      console.warn('htmlToImage toPng failed, falling back to canvas:', err);
-      const canvas = await captureBillCanvas(element);
-      dataUrl = canvas.toDataURL('image/png');
-    }
-
-    const link = document.createElement('a');
-    link.download = filename;
-    link.href = dataUrl;
-    link.click();
-  } finally {
-    if (outer) {
-      outer.style.transform = prevTransform;
-      outer.style.transformOrigin = prevOrigin;
-      outer.style.marginBottom = prevMargin;
-    }
-  }
+  const dataUrl = framedCanvas.toDataURL('image/png');
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = dataUrl;
+  link.click();
 }
 
 /**
  * Direct crystal-clear PDF export for bills
+ * Uses a safe 6mm document margin so all borders are crisp, visible, and never clipped by printers.
  */
 export async function exportBillToPdf(element, filename = 'Transport_Bill.pdf') {
   if (!element) throw new Error('Preview element not found');
@@ -247,25 +223,20 @@ export async function exportBillToPdf(element, filename = 'Transport_Bill.pdf') 
 
   const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
   const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
-  const renderHeight = (canvas.height * pageWidth) / canvas.width;
 
-  if (renderHeight <= pageHeight * 1.15) {
-    // Single page: fits precisely on A4 full sheet
-    pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
-  } else {
-    // Multi-page handling for very tall bills
-    let remainingHeight = renderHeight;
-    let position = 0;
-    pdf.addImage(imgData, 'PNG', 0, position, pageWidth, renderHeight, undefined, 'FAST');
-    remainingHeight -= pageHeight;
-    while (remainingHeight > 0) {
-      position = position - pageHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, pageWidth, renderHeight, undefined, 'FAST');
-      remainingHeight -= pageHeight;
-    }
-  }
+  // Standard 6mm print margins for professional, unclipped A4 presentation
+  const marginMm = 6;
+  const printWidth = pageWidth - marginMm * 2; // 198mm
+  const printHeight = pageHeight - marginMm * 2; // 285mm
 
+  const scale = Math.min(printWidth / canvas.width, printHeight / canvas.height);
+  const renderWidth = canvas.width * scale;
+  const renderHeight = canvas.height * scale;
+
+  const posX = (pageWidth - renderWidth) / 2;
+  const posY = (pageHeight - renderHeight) / 2;
+
+  pdf.addImage(imgData, 'PNG', posX, posY, renderWidth, renderHeight, undefined, 'FAST');
   pdf.save(filename);
 }
 
