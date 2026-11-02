@@ -99,16 +99,16 @@ export function BillToolbar({ resetData, settings, updateSection }) {
             letterSpacing: '0.5px',
           }}
         >
-          Template:
+          Template ({BILL_TEMPLATES.indexOf(settings.template) !== -1 ? `#${BILL_TEMPLATES.indexOf(settings.template) + 1}` : '#1'} of {BILL_TEMPLATES.length}):
         </label>
         <select
           className="bill-template-select"
           value={settings.template}
           onChange={(e) => updateSection('settings', 'template', e.target.value)}
         >
-          {BILL_TEMPLATES.map((tmpl) => (
+          {BILL_TEMPLATES.map((tmpl, index) => (
             <option key={tmpl} value={tmpl}>
-              {tmpl}
+              {index + 1}. {tmpl}
             </option>
           ))}
         </select>
